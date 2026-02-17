@@ -4,15 +4,17 @@ import { useState, useEffect } from "react";
 import { getBrowserSupabase } from "@/lib/supabase";
 import type { UserProfile } from "@/lib/types";
 
-interface DailyPoint {
+type DailyPoint = {
   date: string;
   count: number;
-}
+  [key: string]: string | number;
+};
 
-interface MonthlyPoint {
+type MonthlyPoint = {
   month: string;
   count: number;
-}
+  [key: string]: string | number;
+};
 
 interface UsageStats {
   daily: DailyPoint[];
