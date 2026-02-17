@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Refund Policy - ContractEar",
   description:
-    "Refund Policy for ContractEar. All digital payments are final and non-refundable.",
+    "Refund Policy for ContractEar. Learn about our refund process for digital analysis services.",
 };
 
 export default function RefundPage() {
@@ -12,69 +12,92 @@ export default function RefundPage() {
       <h1 className="text-3xl font-bold">Refund Policy</h1>
       <p className="mt-2 text-sm text-muted">Last updated: February 2026</p>
 
-      <div className="mt-6 rounded-xl border border-warning/30 bg-warning/10 p-4">
-        <p className="text-sm font-medium text-warning">
-          All payments are final and non-refundable. This includes per-analysis
-          payments, monthly subscription fees, and all other charges. By
-          completing a purchase, you acknowledge and agree to this policy.
+      <div className="mt-6 rounded-xl border border-accent/30 bg-accent/10 p-4">
+        <p className="text-sm font-medium text-accent-light">
+          We want you to be satisfied with ContractEar. If you&apos;re not happy
+          with your purchase, you may request a refund within 14 days subject to
+          the conditions below.
         </p>
       </div>
 
       <div className="mt-8 space-y-6 text-sm leading-relaxed text-muted">
         <section>
           <h2 className="mb-2 text-lg font-semibold text-foreground">
-            No Refund Policy
+            Refund Eligibility
           </h2>
           <p>
-            ContractEar provides digital AI-powered analysis services that are
-            delivered electronically and instantly upon processing. Due to the
-            nature of digital delivery and the immediate, irreversible
-            consumption of AI processing resources (transcription and analysis),{" "}
+            ContractEar provides digital AI-powered analysis services delivered
+            electronically. You may request a refund within{" "}
             <strong className="text-foreground">
-              all sales are final and no refunds will be issued under any
-              circumstances
-            </strong>
-            . This applies to:
+              14 days of your purchase date
+            </strong>{" "}
+            under the following conditions:
           </p>
           <ul className="mt-3 list-disc space-y-1.5 pl-5">
             <li>
-              <strong>Per-analysis payments ($3.99):</strong> Once payment is
-              submitted, processing begins immediately and resources are consumed
-              regardless of outcome.
+              <strong>Per-analysis payments ($3.99):</strong> Refund requests
+              are accepted if the analysis failed to produce results due to a
+              system error, or if the service was significantly not as described.
             </li>
             <li>
-              <strong>Basic plan subscriptions ($29/month):</strong> Monthly
-              subscription fees are charged in advance and are non-refundable,
-              including partial month usage.
+              <strong>Basic plan subscriptions ($29/month):</strong> You may
+              request a refund within 14 days of your initial subscription or
+              any renewal charge.
             </li>
             <li>
-              <strong>Pro plan subscriptions ($79/month):</strong> Monthly
-              subscription fees are charged in advance and are non-refundable,
-              including partial month usage.
+              <strong>Pro plan subscriptions ($79/month):</strong> You may
+              request a refund within 14 days of your initial subscription or
+              any renewal charge.
             </li>
           </ul>
         </section>
 
         <section>
           <h2 className="mb-2 text-lg font-semibold text-foreground">
-            Situations Where Refunds Will Not Be Issued
+            How to Request a Refund
           </h2>
-          <ul className="list-disc space-y-1.5 pl-5">
+          <p>To request a refund, you can:</p>
+          <ul className="mt-3 list-disc space-y-1.5 pl-5">
             <li>
-              Analysis was delivered but you are unsatisfied with the quality or
-              accuracy of results
+              Email us at{" "}
+              <a
+                href="mailto:support@contractear.com"
+                className="text-accent-light hover:underline"
+              >
+                support@contractear.com
+              </a>{" "}
+              with your account email and reason for the refund request.
             </li>
-            <li>Poor audio quality leading to less accurate transcription</li>
-            <li>You uploaded the wrong file</li>
-            <li>Change of mind after purchase</li>
             <li>
-              Processing failure or technical error — we will attempt
-              re-processing but will not issue monetary refunds
+              Contact Paddle (our payment processor) directly through the
+              receipt email you received at the time of purchase.
             </li>
-            <li>Duplicate charges — contact Paddle directly for dispute resolution</li>
-            <li>Unused analyses on subscription plans</li>
-            <li>Cancellation of subscription mid-cycle</li>
-            <li>Account termination or suspension</li>
+          </ul>
+          <p className="mt-3">
+            Refund requests are typically processed within 5-10 business days.
+            Approved refunds will be returned to the original payment method.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="mb-2 text-lg font-semibold text-foreground">
+            Situations Where Refunds May Not Be Issued
+          </h2>
+          <p>
+            While we review all refund requests fairly, refunds may not be
+            granted in the following situations:
+          </p>
+          <ul className="mt-3 list-disc space-y-1.5 pl-5">
+            <li>
+              The analysis was successfully delivered but you are unsatisfied
+              with the subjective quality of results
+            </li>
+            <li>
+              Poor audio quality leading to less accurate transcription (the
+              service performed as expected given the input)
+            </li>
+            <li>The refund request is made more than 14 days after purchase</li>
+            <li>Evidence of abuse or fraudulent refund requests</li>
           </ul>
         </section>
 
@@ -85,9 +108,9 @@ export default function RefundPage() {
           <p>
             You may cancel your subscription at any time. Upon cancellation,
             your plan will remain active until the end of the current billing
-            cycle. No pro-rated refunds are provided for the remaining days of
-            the billing period. After cancellation, your account will revert to
-            the Pay Per Use tier.
+            cycle. If you cancel within 14 days of a charge, you may also
+            request a refund for that charge. After cancellation, your account
+            will revert to the Pay Per Use tier.
           </p>
         </section>
 
@@ -97,10 +120,9 @@ export default function RefundPage() {
           </h2>
           <p>
             If our system fails to produce an analysis due to a technical error,
-            we will make reasonable efforts to re-process your audio file at no
-            additional cost. However, this does not entitle you to a monetary
-            refund. Contact support with your analysis ID for re-processing
-            requests.
+            we will either re-process your audio file at no additional cost or
+            issue a full refund — whichever you prefer. Contact support with
+            your analysis ID for assistance.
           </p>
         </section>
 
@@ -111,10 +133,18 @@ export default function RefundPage() {
           <p>
             All payments are processed by Paddle.com Market Limited
             (&quot;Paddle&quot;), our Merchant of Record. Paddle handles all
-            payment processing, tax collection, and billing. Any billing
-            disputes should be directed to Paddle. By making a purchase, you
-            agree to both our no-refund policy and Paddle&apos;s terms of
-            service.
+            payment processing, tax collection, billing, and refund fulfillment.
+            You may also contact Paddle directly to request a refund through the
+            receipt email or at{" "}
+            <a
+              href="https://www.paddle.com/help"
+              className="text-accent-light hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              paddle.com/help
+            </a>
+            .
           </p>
         </section>
 
@@ -123,7 +153,8 @@ export default function RefundPage() {
             Contact
           </h2>
           <p>
-            For billing questions or re-processing requests, contact us at{" "}
+            For refund requests, billing questions, or re-processing requests,
+            contact us at{" "}
             <a
               href="mailto:support@contractear.com"
               className="text-accent-light hover:underline"

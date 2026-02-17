@@ -27,7 +27,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Are payments refundable?",
-    a: "All payments are final and non-refundable. This includes per-analysis payments and monthly subscriptions. Due to the immediate digital delivery nature of our AI processing service, we cannot offer refunds. Please review our refund policy for details.",
+    a: "We offer refunds within 14 days of purchase. If you're not satisfied or experience a technical issue, contact us at support@contractear.com or reach out to Paddle directly through your receipt email. Please review our refund policy for full details.",
   },
   {
     q: "Do you support languages other than English?",
@@ -210,8 +210,8 @@ export default function Home() {
           Choose Your Plan
         </h2>
         <p className="mt-3 text-center text-muted">
-          Pay per analysis or save with a monthly plan. All payments are final
-          and non-refundable.
+          Pay per analysis or save with a monthly plan. 14-day refund policy on
+          all purchases.
         </p>
         <div className="mx-auto mt-10 grid max-w-4xl gap-6 sm:grid-cols-3">
           {PLANS.map((plan) => (
