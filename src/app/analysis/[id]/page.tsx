@@ -233,9 +233,6 @@ export default function AnalysisPage({
           <p className="mt-2 text-sm text-muted">
             {error || "An unexpected error occurred during analysis."}
           </p>
-          <p className="mt-1 text-xs text-muted/70">
-            The audio file has been deleted. You will not be charged for failed analyses.
-          </p>
           <p className="mt-4 text-sm text-muted">
             Need help?{" "}
             <a

@@ -20,6 +20,9 @@ export const metadata: Metadata = {
     'Upload meeting recordings and get AI-powered analysis of verbal commitments, deadlines, red flags, and action items. Protect yourself from "I never said that" disputes.',
   keywords:
     "verbal agreement analyzer, meeting recording analysis, AI contract analyzer, audio agreement analysis, verbal commitment tracker, meeting transcription analysis",
+  verification: {
+    google: "eDw2fWEXVf7ksLhgsc25Dxh4O_h3lT81o7SH6rKQGpQ",
+  },
   openGraph: {
     title: "ContractEar - AI Audio Agreement Analyzer",
     description:
