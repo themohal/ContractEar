@@ -38,7 +38,7 @@ export const metadata: Metadata = {
       "Upload meeting recordings and get AI-powered analysis of verbal commitments, deadlines, and red flags.",
   },
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || "https://contractear.com"
+    process.env.NEXT_PUBLIC_APP_URL || "https://contract-ear.vercel.app"
   ),
 };
 
