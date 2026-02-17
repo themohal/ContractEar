@@ -125,7 +125,10 @@ export async function processAnalysis(analysisId: string) {
       .from("audio-uploads")
       .remove([analysis.audio_path]);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Processing failed";
+    const rawMessage = err instanceof Error ? err.message : "Processing failed";
+    const message = rawMessage.includes("API key")
+      ? "Service configuration error. Please contact support."
+      : rawMessage.replace(/sk-[a-zA-Z0-9]+/g, "***");
     await supabase
       .from("analyses")
       .update({
