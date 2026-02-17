@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/analysis/"],
       },
     ],
-    sitemap: "https://contractear.com/sitemap.xml",
+    sitemap: "https://contract-ear.vercel.app/sitemap.xml",
   };
 }
