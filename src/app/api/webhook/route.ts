@@ -9,7 +9,12 @@ export async function POST(request: NextRequest) {
     const rawBody = await request.text();
     const signature = request.headers.get("paddle-signature");
 
+    console.log("[Webhook] Received event");
+    console.log("[Webhook] Has signature:", !!signature);
+    console.log("[Webhook] Has secret:", !!process.env.PADDLE_WEBHOOK_SECRET);
+
     if (!signature) {
+      console.log("[Webhook] REJECTED: Missing signature");
       return NextResponse.json(
         { error: "Missing signature" },
         { status: 401 }
@@ -22,7 +27,10 @@ export async function POST(request: NextRequest) {
       process.env.PADDLE_WEBHOOK_SECRET!
     );
 
+    console.log("[Webhook] Signature valid:", isValid);
+
     if (!isValid) {
+      console.log("[Webhook] REJECTED: Invalid signature");
       return NextResponse.json(
         { error: "Invalid signature" },
         { status: 401 }
@@ -31,6 +39,9 @@ export async function POST(request: NextRequest) {
 
     const event = JSON.parse(rawBody);
     const supabase = getServiceSupabase();
+
+    console.log("[Webhook] Event type:", event.event_type);
+    console.log("[Webhook] Custom data:", JSON.stringify(event.data?.custom_data));
 
     // Handle single analysis payment
     if (event.event_type === "transaction.completed") {
@@ -73,13 +84,14 @@ export async function POST(request: NextRequest) {
       // Plan payment (subscription or pay-per-use activation)
       if (customData?.tier && customData?.user_id) {
         const { tier, user_id } = customData;
+        console.log("[Webhook] Updating plan for user:", user_id, "to tier:", tier);
         const limits: Record<string, number> = {
           single: 0,
           basic: 20,
           pro: 50,
         };
 
-        await supabase
+        const { error: updateError } = await supabase
           .from("profiles")
           .update({
             plan: tier,
@@ -91,6 +103,12 @@ export async function POST(request: NextRequest) {
             updated_at: new Date().toISOString(),
           })
           .eq("id", user_id);
+
+        if (updateError) {
+          console.error("[Webhook] Profile update failed:", updateError);
+        } else {
+          console.log("[Webhook] Profile updated successfully to plan:", tier);
+        }
       }
     }
 
