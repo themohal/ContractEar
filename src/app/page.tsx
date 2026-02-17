@@ -27,7 +27,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Are payments refundable?",
-    a: "We offer refunds within 14 days of purchase. If you're not satisfied or experience a technical issue, contact us at support@contractear.com or reach out to Paddle directly through your receipt email. Please review our refund policy for full details.",
+    a: "We offer refunds within 14 days of purchase. If you're not satisfied or experience a technical issue, contact us at paktechknowledge@gmail.com or reach out to Paddle directly through your receipt email. Please review our refund policy for full details.",
   },
   {
     q: "Do you support languages other than English?",

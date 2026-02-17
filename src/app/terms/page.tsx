@@ -152,10 +152,10 @@ export default function TermsPage() {
           <p>
             For questions about these Terms, contact us at{" "}
             <a
-              href="mailto:support@contractear.com"
+              href="mailto:paktechknowledge@gmail.com"
               className="text-accent-light hover:underline"
             >
-              support@contractear.com
+              paktechknowledge@gmail.com
             </a>
             .
           </p>

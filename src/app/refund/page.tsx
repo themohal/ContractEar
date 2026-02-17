@@ -61,10 +61,10 @@ export default function RefundPage() {
             <li>
               Email us at{" "}
               <a
-                href="mailto:support@contractear.com"
+                href="mailto:paktechknowledge@gmail.com"
                 className="text-accent-light hover:underline"
               >
-                support@contractear.com
+                paktechknowledge@gmail.com
               </a>{" "}
               with your account email and reason for the refund request.
             </li>
@@ -156,10 +156,10 @@ export default function RefundPage() {
             For refund requests, billing questions, or re-processing requests,
             contact us at{" "}
             <a
-              href="mailto:support@contractear.com"
+              href="mailto:paktechknowledge@gmail.com"
               className="text-accent-light hover:underline"
             >
-              support@contractear.com
+              paktechknowledge@gmail.com
             </a>
             . Please include your analysis ID or account email.
           </p>

@@ -117,10 +117,10 @@ export default function PrivacyPage() {
             You have the right to request deletion of your analysis data.
             Contact us at{" "}
             <a
-              href="mailto:support@contractear.com"
+              href="mailto:paktechknowledge@gmail.com"
               className="text-accent-light hover:underline"
             >
-              support@contractear.com
+              paktechknowledge@gmail.com
             </a>{" "}
             with your analysis ID and we will remove it from our database.
           </p>
@@ -143,10 +143,10 @@ export default function PrivacyPage() {
           <p>
             For privacy questions or data deletion requests, contact us at{" "}
             <a
-              href="mailto:support@contractear.com"
+              href="mailto:paktechknowledge@gmail.com"
               className="text-accent-light hover:underline"
             >
-              support@contractear.com
+              paktechknowledge@gmail.com
             </a>
             .
           </p>

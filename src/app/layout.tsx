@@ -108,7 +108,7 @@ export default function RootLayout({
                   Refund Policy
                 </a>
                 <a
-                  href="mailto:support@contractear.com"
+                  href="mailto:paktechknowledge@gmail.com"
                   className="hover:text-foreground transition"
                 >
                   Support
