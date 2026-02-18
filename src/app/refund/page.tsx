@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Refund Policy - ContractEar",
   description:
-    "Refund Policy for ContractEar. Full refunds available within 14 days, handled by Paddle.",
+    "Refund Policy for ContractEar. Refunds are prorated based on usage. Handled by Paddle.",
 };
 
 export default function RefundPage() {
@@ -14,34 +14,45 @@ export default function RefundPage() {
 
       <div className="mt-6 rounded-xl border border-accent/30 bg-accent/10 p-4">
         <p className="text-sm font-medium text-accent-light">
-          We offer a full refund within 14 days of any purchase — no questions
-          asked. All refunds are handled by Paddle, our Merchant of Record.
+          All sales are final once analysis results have been delivered. If a
+          refund is granted, usage costs are deducted. All refunds are handled
+          by Paddle, our Merchant of Record.
         </p>
       </div>
 
       <div className="mt-8 space-y-6 text-sm leading-relaxed text-muted">
         <section>
           <h2 className="mb-2 text-lg font-semibold text-foreground">
-            14-Day Refund Policy
+            Refund Policy
           </h2>
           <p>
-            If you are not satisfied with your purchase for any reason, you are
-            entitled to a full refund within{" "}
-            <strong className="text-foreground">14 days</strong> of the
-            original purchase date. This applies to all purchases, including:
+            Because ContractEar delivers digital results immediately upon
+            processing,{" "}
+            <strong className="text-foreground">
+              all sales are final once results have been delivered
+            </strong>
+            . Each completed analysis is a delivered service and is
+            non-refundable.
+          </p>
+          <p className="mt-3">
+            If a refund is approved, the cost of any analyses already delivered
+            will be deducted at the per-analysis rate of{" "}
+            <strong className="text-foreground">$3.99 per analysis</strong>.
+            This applies to all purchase types:
           </p>
           <ul className="mt-3 list-disc space-y-1.5 pl-5">
             <li>
-              <strong>Per-analysis payments ($3.99)</strong>
+              <strong>Per-analysis payments ($3.99)</strong> — non-refundable
+              once results are delivered.
             </li>
             <li>
-              <strong>Basic plan subscriptions ($29/month)</strong>
+              <strong>Subscription plans</strong> — refund amount equals the
+              subscription fee minus $3.99 for each analysis used during the
+              billing period.
             </li>
             <li>
-              <strong>Pro plan subscriptions ($79/month)</strong>
-            </li>
-            <li>
-              <strong>Support contributions ($5 / $10)</strong>
+              <strong>Support contributions ($5 / $10)</strong> — all
+              contributions are final and non-refundable.
             </li>
           </ul>
         </section>
@@ -86,9 +97,10 @@ export default function RefundPage() {
           <p>
             You may cancel your subscription at any time. Upon cancellation,
             your plan will remain active until the end of the current billing
-            cycle. You may request a refund within 14 days of any charge
-            through Paddle. After cancellation, your account will revert to the
-            Pay Per Use tier.
+            cycle. If a refund is requested, the cost of analyses used during
+            that billing period ($3.99 each) will be deducted from the refund
+            amount. After cancellation, your account will revert to the Pay Per
+            Use tier.
           </p>
         </section>
 

@@ -25,7 +25,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Are payments refundable?",
-    a: "Yes! We offer a full refund within 14 days of any purchase, no questions asked. All refunds are handled by Paddle, our payment processor. Use the link in your Paddle receipt email or visit paddle.com/help to request a refund. See our refund policy for full details.",
+    a: "All sales are final once analysis results have been delivered. If a refund is approved, the cost of any delivered analyses ($3.99 each) is deducted from the refund amount. Support contributions are non-refundable. All refund requests are handled by Paddle, our payment processor. Use the link in your Paddle receipt email or visit paddle.com/help to submit a request. See our refund policy for full details.",
   },
   {
     q: "Do you support languages other than English?",

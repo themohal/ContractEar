@@ -152,7 +152,7 @@ export default function DonatePage() {
         . Paddle.com is the Merchant of Record for all our orders. Paddle
         provides all customer service inquiries and handles returns.
         Contributions are one-time payments to help cover the cost of services.
-        A full refund is available within 14 days of any purchase.
+        All contributions are final and non-refundable.
       </p>
     </div>
   );

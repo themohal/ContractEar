@@ -124,8 +124,8 @@ export default function Home() {
           Choose Your Plan
         </h2>
         <p className="mt-3 text-center text-muted">
-          Pay per analysis or save with a monthly plan. 14-day refund policy on
-          all purchases.
+          Pay per analysis or save with a monthly plan. All payments processed
+          securely by Paddle.
         </p>
         <div className="mx-auto mt-10 grid max-w-4xl gap-6 sm:grid-cols-3">
           {PLANS.map((plan) => (

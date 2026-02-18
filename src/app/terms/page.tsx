@@ -64,8 +64,9 @@ export default function TermsPage() {
             Merchant of Record for all our orders. Paddle provides all customer
             service inquiries and handles returns. By making a purchase, you
             also agree to Paddle&apos;s terms of service. All prices are in USD
-            unless otherwise stated. We offer a full refund within 14 days of
-            any purchase — see our{" "}
+            unless otherwise stated. All sales are final once results are
+            delivered. Refunds, if approved, are prorated based on usage — see
+            our{" "}
             <a
               href="/refund"
               className="text-accent-light hover:underline"
@@ -147,8 +148,8 @@ export default function TermsPage() {
             one-time purchases by Paddle.com, our Merchant of Record, and are
             subject to the same terms as all other purchases. Contributions do
             not entitle the buyer to any additional product, feature, or service
-            beyond what is already available. A full refund is available within
-            14 days of any purchase.
+            beyond what is already available. All contributions are final and
+            non-refundable.
           </p>
         </section>
 
