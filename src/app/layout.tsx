@@ -107,6 +107,9 @@ export default function RootLayout({
                 <a href="/refund" className="hover:text-foreground transition">
                   Refund Policy
                 </a>
+                <a href="/donate" className="hover:text-foreground transition">
+                  Donate
+                </a>
                 <a
                   href="mailto:paktechknowledge@gmail.com"
                   className="hover:text-foreground transition"

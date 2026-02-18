@@ -138,7 +138,21 @@ export default function TermsPage() {
 
         <section>
           <h2 className="mb-2 text-lg font-semibold text-foreground">
-            9. Changes to Terms
+            9. Donations
+          </h2>
+          <p>
+            ContractEar accepts voluntary donations to help cover the cost of
+            running AI processing, hosting, and infrastructure services.
+            Donations are not tied to any specific product, feature, or service
+            guarantee. All donation payments are processed by Paddle.com, our
+            Merchant of Record. A full refund is available within 14 days of any
+            donation.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="mb-2 text-lg font-semibold text-foreground">
+            10. Changes to Terms
           </h2>
           <p>
             Kraken AI reserves the right to modify these Terms at any time.
@@ -149,7 +163,7 @@ export default function TermsPage() {
 
         <section>
           <h2 className="mb-2 text-lg font-semibold text-foreground">
-            10. Contact
+            11. Contact
           </h2>
           <p>
             For questions about these Terms, contact us at{" "}
