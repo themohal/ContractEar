@@ -59,11 +59,13 @@ export default function TermsPage() {
           </h2>
           <p>
             Kraken AI, through ContractEar, charges a one-time fee per audio
-            analysis or a recurring subscription fee. All payments are processed
-            by Paddle.com Market Limited (&quot;Paddle&quot;), our Merchant of
-            Record. By making a purchase, you also agree to Paddle&apos;s terms
-            of service. All prices are in USD unless otherwise stated. Refunds
-            are available within 14 days of purchase — see our{" "}
+            analysis or a recurring subscription fee. Our order process is
+            conducted by our online reseller Paddle.com. Paddle.com is the
+            Merchant of Record for all our orders. Paddle provides all customer
+            service inquiries and handles returns. By making a purchase, you
+            also agree to Paddle&apos;s terms of service. All prices are in USD
+            unless otherwise stated. We offer a full refund within 14 days of
+            any purchase — see our{" "}
             <a
               href="/refund"
               className="text-accent-light hover:underline"
