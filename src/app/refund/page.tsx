@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Refund Policy - ContractEar",
   description:
-    "Refund Policy for ContractEar. We offer full refunds within 14 days of purchase.",
+    "Refund Policy for ContractEar. Full refunds available within 14 days, handled by Paddle.",
 };
 
 export default function RefundPage() {
@@ -15,7 +15,7 @@ export default function RefundPage() {
       <div className="mt-6 rounded-xl border border-accent/30 bg-accent/10 p-4">
         <p className="text-sm font-medium text-accent-light">
           We offer a full refund within 14 days of any purchase — no questions
-          asked.
+          asked. All refunds are handled by Paddle, our Merchant of Record.
         </p>
       </div>
 
@@ -40,6 +40,9 @@ export default function RefundPage() {
             <li>
               <strong>Pro plan subscriptions ($79/month)</strong>
             </li>
+            <li>
+              <strong>Support contributions ($5 / $10)</strong>
+            </li>
           </ul>
         </section>
 
@@ -47,21 +50,27 @@ export default function RefundPage() {
           <h2 className="mb-2 text-lg font-semibold text-foreground">
             How to Request a Refund
           </h2>
-          <p>To request a refund, you can:</p>
+          <p>
+            All refunds are handled by Paddle.com, our Merchant of Record. To
+            request a refund:
+          </p>
           <ul className="mt-3 list-disc space-y-1.5 pl-5">
             <li>
-              Email us at{" "}
-              <a
-                href="mailto:paktechknowledge@gmail.com"
-                className="text-accent-light hover:underline"
-              >
-                paktechknowledge@gmail.com
-              </a>{" "}
-              with your account email.
+              Use the receipt email you received from Paddle at the time of
+              purchase — it contains a link to manage your order and request a
+              refund.
             </li>
             <li>
-              Contact Paddle (our payment processor) directly through the
-              receipt email you received at the time of purchase.
+              Or visit{" "}
+              <a
+                href="https://www.paddle.com/help"
+                className="text-accent-light hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                paddle.com/help
+              </a>{" "}
+              to contact Paddle&apos;s support team directly.
             </li>
           </ul>
           <p className="mt-3">
@@ -77,8 +86,9 @@ export default function RefundPage() {
           <p>
             You may cancel your subscription at any time. Upon cancellation,
             your plan will remain active until the end of the current billing
-            cycle. You may request a refund within 14 days of any charge. After
-            cancellation, your account will revert to the Pay Per Use tier.
+            cycle. You may request a refund within 14 days of any charge
+            through Paddle. After cancellation, your account will revert to the
+            Pay Per Use tier.
           </p>
         </section>
 
@@ -89,9 +99,9 @@ export default function RefundPage() {
           <p>
             Our order process is conducted by our online reseller Paddle.com.
             Paddle.com is the Merchant of Record for all our orders. Paddle
-            provides all customer service inquiries and handles returns. You may
-            contact Paddle directly to request a refund through the receipt
-            email or at{" "}
+            provides all customer service inquiries and handles returns. For any
+            refund or billing questions, please contact Paddle directly through
+            your receipt email or at{" "}
             <a
               href="https://www.paddle.com/help"
               className="text-accent-light hover:underline"
@@ -99,22 +109,6 @@ export default function RefundPage() {
               rel="noopener noreferrer"
             >
               paddle.com/help
-            </a>
-            .
-          </p>
-        </section>
-
-        <section>
-          <h2 className="mb-2 text-lg font-semibold text-foreground">
-            Contact
-          </h2>
-          <p>
-            For refund requests or billing questions, contact us at{" "}
-            <a
-              href="mailto:paktechknowledge@gmail.com"
-              className="text-accent-light hover:underline"
-            >
-              paktechknowledge@gmail.com
             </a>
             .
           </p>
