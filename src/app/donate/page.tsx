@@ -42,9 +42,9 @@ export default function DonatePage() {
     script.async = true;
     script.onload = () => {
       if (window.Paddle) {
-        if (process.env.NEXT_PUBLIC_PADDLE_ENV === "sandbox") {
-          window.Paddle.Environment.set("sandbox");
-        }
+        window.Paddle.Environment.set(
+          process.env.NEXT_PUBLIC_PADDLE_ENV || "sandbox"
+        );
         window.Paddle.Initialize({
           token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || "",
         });
@@ -131,19 +131,9 @@ export default function DonatePage() {
           Where does my contribution go?
         </h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          {[
-            { label: "Processing", desc: "OpenAI Whisper & GPT-4o API costs" },
-            { label: "Hosting", desc: "Vercel serverless & Supabase database" },
-            {
-              label: "Infrastructure",
-              desc: "Storage, bandwidth & maintenance",
-            },
-          ].map((item) => (
-            <div key={item.label} className="text-center">
-              <p className="text-sm font-medium text-foreground">
-                {item.label}
-              </p>
-              <p className="mt-0.5 text-xs text-muted">{item.desc}</p>
+          {["Processing", "Hosting", "Infrastructure"].map((label) => (
+            <div key={label} className="text-center">
+              <p className="text-sm font-medium text-foreground">{label}</p>
             </div>
           ))}
         </div>
