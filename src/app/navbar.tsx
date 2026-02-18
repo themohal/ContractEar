@@ -1,26 +1,6 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { getBrowserSupabase } from "@/lib/supabase";
+import NavbarAuth from "./navbar-auth";
 
 export default function Navbar() {
-  const [loggedIn, setLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const supabase = getBrowserSupabase();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setLoggedIn(true);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setLoggedIn(!!session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
   return (
     <nav className="no-print sticky top-0 z-50 border-b border-card-border bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
@@ -39,23 +19,7 @@ export default function Navbar() {
           </svg>
           ContractEar
         </a>
-
-        {!loggedIn && (
-          <div className="flex items-center gap-4 text-sm text-muted">
-            <a href="/#pricing" className="hover:text-foreground transition">
-              Pricing
-            </a>
-            <a href="/#faq" className="hover:text-foreground transition">
-              FAQ
-            </a>
-            <a
-              href="/login"
-              className="rounded-lg bg-accent px-4 py-1.5 text-white transition-colors hover:bg-accent-light"
-            >
-              Sign In
-            </a>
-          </div>
-        )}
+        <NavbarAuth />
       </div>
     </nav>
   );
