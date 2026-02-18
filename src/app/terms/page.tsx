@@ -141,12 +141,14 @@ export default function TermsPage() {
             9. Donations
           </h2>
           <p>
-            ContractEar accepts voluntary donations to help cover the cost of
-            running AI processing, hosting, and infrastructure services.
-            Donations are not tied to any specific product, feature, or service
-            guarantee. All donation payments are processed by Paddle.com, our
-            Merchant of Record. A full refund is available within 14 days of any
-            donation.
+            ContractEar accepts voluntary one-time support contributions to
+            help cover the cost of running processing, hosting, and
+            infrastructure services. These contributions are processed as
+            one-time purchases by Paddle.com, our Merchant of Record, and are
+            subject to the same terms as all other purchases. Contributions do
+            not entitle the buyer to any additional product, feature, or service
+            beyond what is already available. A full refund is available within
+            14 days of any purchase.
           </p>
         </section>
 
