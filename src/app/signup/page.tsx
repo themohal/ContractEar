@@ -37,6 +37,12 @@ export default function SignupPage() {
         return;
       }
 
+      // Supabase returns success with empty identities when email already exists
+      if (data.user?.identities?.length === 0) {
+        setError("An account with this email already exists. Please sign in instead.");
+        return;
+      }
+
       // Sign out immediately so user cannot access app before confirming email
       if (data.session) {
         await supabase.auth.signOut();
