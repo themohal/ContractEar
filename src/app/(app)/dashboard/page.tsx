@@ -503,7 +503,7 @@ export default function DashboardPage() {
                   >
                     {a.status}
                   </span>
-                  {a.status === "completed" && (
+                  {a.status === "completed" && profile.plan === "pro" && (
                     <a
                       href={`/analysis/${a.id}`}
                       className="rounded-lg border border-card-border px-2.5 py-1 text-xs font-medium text-muted transition-colors hover:bg-card hover:text-foreground"

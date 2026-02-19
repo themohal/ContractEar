@@ -15,6 +15,7 @@ export default function AnalysesPage() {
   const [analyses, setAnalyses] = useState<AnalysisItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState("");
+  const [userPlan, setUserPlan] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchAnalyses = useCallback(async (accessToken: string) => {
@@ -36,6 +37,13 @@ export default function AnalysesPage() {
       if (!session) return;
       const t = session.access_token;
       setToken(t);
+      const profileRes = await fetch("/api/profile", {
+        headers: { Authorization: `Bearer ${t}` },
+      });
+      if (profileRes.ok) {
+        const d = await profileRes.json();
+        if (d.profile?.plan) setUserPlan(d.profile.plan);
+      }
       await fetchAnalyses(t);
       setLoading(false);
     };
@@ -168,7 +176,7 @@ export default function AnalysesPage() {
                 >
                   {a.status}
                 </span>
-                {a.status === "completed" && (
+                {a.status === "completed" && userPlan === "pro" && (
                   <a
                     href={`/analysis/${a.id}`}
                     className="rounded-lg border border-card-border px-2.5 py-1 text-xs font-medium text-muted transition-colors hover:bg-card hover:text-foreground"

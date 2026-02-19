@@ -30,17 +30,28 @@ export default function AnalysisPage({
   const [paddleLoaded, setPaddleLoaded] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [token, setToken] = useState<string>("");
+  const [userPlan, setUserPlan] = useState<string>("");
   const [awaitingPayment, setAwaitingPayment] = useState(false);
   const prevStatusRef = useRef<string>("loading");
   const autoDownloadDone = useRef(false);
   const confirmTriggered = useRef(false);
 
-  // Get auth token
+  const isPro = userPlan === "pro";
+
+  // Get auth token and user plan
   useEffect(() => {
     const supabase = getBrowserSupabase();
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setToken(session.access_token);
+        fetch("/api/profile", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+          .then((r) => r.json())
+          .then((d) => {
+            if (d.profile?.plan) setUserPlan(d.profile.plan);
+          })
+          .catch(() => {});
       }
     });
   }, []);
@@ -190,7 +201,7 @@ export default function AnalysisPage({
     return () => clearInterval(timer);
   }, [status]);
 
-  // Auto-download PDF when analysis completes (watched transition or fresh page load)
+  // Auto-download PDF when analysis completes (pro plan only)
   useEffect(() => {
     const wasProcessing =
       prevStatusRef.current === "processing" || prevStatusRef.current === "paid";
@@ -198,13 +209,14 @@ export default function AnalysisPage({
       wasProcessing &&
       status === "completed" &&
       result &&
+      isPro &&
       !autoDownloadDone.current
     ) {
       autoDownloadDone.current = true;
       setTimeout(() => generatePDF(result, fileName), 500);
     }
     prevStatusRef.current = status;
-  }, [status, result, fileName]);
+  }, [status, result, fileName, isPro]);
 
   const handleCheckout = useCallback(async () => {
     setCheckoutLoading(true);
@@ -399,7 +411,7 @@ export default function AnalysisPage({
 
   // Completed — Results
   if (status === "completed" && result) {
-    return <ResultsView result={result} fileName={fileName} onDownloadPDF={() => generatePDF(result, fileName)} />;
+    return <ResultsView result={result} fileName={fileName} isPro={isPro} onDownloadPDF={() => generatePDF(result, fileName)} />;
   }
 
   return null;
@@ -414,10 +426,12 @@ function Spinner() {
 function ResultsView({
   result,
   fileName,
+  isPro,
   onDownloadPDF,
 }: {
   result: AnalysisResult;
   fileName: string;
+  isPro: boolean;
   onDownloadPDF: () => void;
 }) {
   const riskColor =
@@ -691,12 +705,21 @@ function ResultsView({
         <a href="/dashboard" className="text-sm text-accent-light hover:underline">
           Analyze another recording
         </a>
-        <button
-          onClick={onDownloadPDF}
-          className="rounded-lg bg-accent px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-light"
-        >
-          Download PDF
-        </button>
+        {isPro ? (
+          <button
+            onClick={onDownloadPDF}
+            className="rounded-lg bg-accent px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-light"
+          >
+            Download PDF
+          </button>
+        ) : (
+          <a
+            href="/billing"
+            className="rounded-lg border border-accent bg-accent/10 px-6 py-2.5 text-sm font-medium text-accent-light transition-colors hover:bg-accent/20"
+          >
+            Upgrade to Pro for PDF
+          </a>
+        )}
       </div>
 
       <p className="mt-6 text-center text-xs text-muted">
