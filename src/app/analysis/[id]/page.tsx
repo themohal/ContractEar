@@ -228,6 +228,7 @@ export default function AnalysisPage({
         window.Paddle.Checkout.open({
           transactionId: data.transactionId,
           settings: {
+            successUrl: `${window.location.origin}/analysis/${id}?paid=1`,
             displayMode: "overlay",
             theme: "dark",
           },
