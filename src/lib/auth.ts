@@ -60,6 +60,7 @@ export async function ensureProfile(userId: string, email: string) {
       id: userId,
       email,
       plan: "none",
+      is_admin: false,
       analyses_used: 0,
       analyses_limit: 0,
       billing_cycle_start: new Date().toISOString(),

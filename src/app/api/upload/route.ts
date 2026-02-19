@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
-import { getAuthUser, unauthorizedResponse, checkUsageLimit } from "@/lib/auth";
+import { getAuthUser, unauthorizedResponse, checkUsageLimit, incrementUsage } from "@/lib/auth";
+import { processAnalysis } from "@/lib/process-analysis";
 import { randomUUID } from "crypto";
 
 const ALLOWED_TYPES = [
@@ -70,8 +71,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Determine status based on plan
-    const initialStatus = usage.plan === "single" ? "pending" : "paid";
+    // Determine status based on plan: subscribers skip payment
+    const initialStatus = usage.plan === "single" ? "pending" : "processing";
 
     const { error: insertError } = await supabase.from("analyses").insert({
       id,
@@ -89,6 +90,14 @@ export async function POST(request: NextRequest) {
         { error: "Failed to create analysis record" },
         { status: 500 }
       );
+    }
+
+    // For subscription users, start processing immediately
+    if (usage.plan !== "single") {
+      incrementUsage(user.id).catch(() => {});
+      processAnalysis(id).catch((err) => {
+        console.error("Processing failed in upload:", err);
+      });
     }
 
     return NextResponse.json({

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser, unauthorizedResponse } from "@/lib/auth";
+import { getServiceSupabase } from "@/lib/supabase";
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,10 +54,19 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
+    const transactionId = data.data.id;
 
-    return NextResponse.json({
-      transactionId: data.data.id,
-    });
+    // Save the Paddle transaction ID so we can verify payment later
+    const supabase = getServiceSupabase();
+    await supabase
+      .from("analyses")
+      .update({
+        paddle_transaction_id: transactionId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", analysisId);
+
+    return NextResponse.json({ transactionId });
   } catch {
     return NextResponse.json(
       { error: "Internal server error" },

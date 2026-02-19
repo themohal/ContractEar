@@ -13,13 +13,14 @@ declare global {
       Initialize: (config: { token: string }) => void;
       Checkout: {
         open: (config: {
-          items: { priceId: string; quantity: number }[];
-          customData: Record<string, string>;
-          settings: {
-            successUrl: string;
-            displayMode: string;
-            theme: string;
+          items?: { priceId: string; quantity: number }[];
+          customData?: Record<string, string>;
+          settings?: {
+            successUrl?: string;
+            displayMode?: string;
+            theme?: string;
           };
+          transactionId?: string;
         }) => void;
       };
     };
