@@ -25,6 +25,7 @@ export default function DashboardPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [urlInput, setUrlInput] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchAnalyses = useCallback(
     async (accessToken: string) => {
@@ -171,6 +172,27 @@ export default function DashboardPage() {
       setIsUploading(false);
     }
   }, [urlInput, router, token]);
+
+  const handleDelete = useCallback(
+    async (analysisId: string) => {
+      setDeletingId(analysisId);
+      try {
+        const res = await fetch("/api/delete-analysis", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ analysisId }),
+        });
+        if (res.ok) {
+          setAnalyses((prev) => prev.filter((a) => a.id !== analysisId));
+        }
+      } catch {}
+      setDeletingId(null);
+    },
+    [token]
+  );
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -410,7 +432,17 @@ export default function DashboardPage() {
 
       {/* Analysis History */}
       <div className="mt-6">
-        <h2 className="text-base font-semibold">Recent Analyses</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold">Recent Analyses</h2>
+          {analyses.length > 3 && (
+            <a
+              href="/analysis"
+              className="text-xs font-medium text-accent-light hover:underline"
+            >
+              View all ({analyses.length}) →
+            </a>
+          )}
+        </div>
         {analyses.length === 0 ? (
           <div className="mt-3 rounded-xl border border-card-border bg-card p-6 text-center">
             <p className="text-muted">No analyses yet</p>
@@ -420,7 +452,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="mt-3 space-y-2">
-            {analyses.map((a) => (
+            {analyses.slice(0, 3).map((a) => (
               <div
                 key={a.id}
                 className="flex items-center justify-between rounded-xl border border-card-border bg-card p-4 transition-colors hover:border-accent-light/30"
@@ -491,6 +523,17 @@ export default function DashboardPage() {
                       <span className="ml-1">PDF</span>
                     </a>
                   )}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleDelete(a.id);
+                    }}
+                    disabled={deletingId === a.id || a.status === "processing"}
+                    className="rounded-lg border border-card-border px-2.5 py-1 text-xs font-medium text-danger transition-colors hover:bg-danger/10 disabled:opacity-50"
+                    title="Delete"
+                  >
+                    {deletingId === a.id ? "..." : "Delete"}
+                  </button>
                 </div>
               </div>
             ))}

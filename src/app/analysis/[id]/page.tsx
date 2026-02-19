@@ -3,26 +3,8 @@
 import { useState, useEffect, useCallback, useRef, use } from "react";
 import { getBrowserSupabase } from "@/lib/supabase";
 import type { AnalysisResult } from "@/lib/types";
+import { generatePDF } from "@/lib/generate-pdf";
 
-declare global {
-  interface Window {
-    Paddle?: {
-      Environment: { set: (env: string) => void };
-      Initialize: (config: { token: string }) => void;
-      Checkout: {
-        open: (config: {
-          items: { priceId: string; quantity: number }[];
-          customData: Record<string, string>;
-          settings: {
-            successUrl: string;
-            displayMode: string;
-            theme: string;
-          };
-        }) => void;
-      };
-    };
-  }
-}
 
 const PROGRESS_MESSAGES = [
   "Uploading audio to our servers...",
@@ -48,8 +30,10 @@ export default function AnalysisPage({
   const [paddleLoaded, setPaddleLoaded] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [token, setToken] = useState<string>("");
+  const [awaitingPayment, setAwaitingPayment] = useState(false);
   const prevStatusRef = useRef<string>("loading");
   const autoDownloadDone = useRef(false);
+  const confirmTriggered = useRef(false);
 
   // Get auth token
   useEffect(() => {
@@ -85,24 +69,59 @@ export default function AnalysisPage({
 
   // Check if paid via query param and trigger confirm
   useEffect(() => {
-    if (!token) return;
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get("paid") === "1") {
-      fetch("/api/confirm-payment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ analysisId: id }),
-      }).catch(console.error);
+      setAwaitingPayment(true);
       window.history.replaceState({}, "", `/analysis/${id}`);
     }
-  }, [id, token]);
+  }, [id]);
 
-  // Poll for status
+  // Retry confirm-payment until webhook has updated status
+  useEffect(() => {
+    if (!awaitingPayment || !token) return;
+    let cancelled = false;
+    let attempts = 0;
+
+    const tryConfirm = async () => {
+      while (!cancelled && attempts < 15) {
+        attempts++;
+        try {
+          const res = await fetch("/api/confirm-payment", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ analysisId: id }),
+          });
+          if (res.ok) {
+            // Payment confirmed and processing started
+            setAwaitingPayment(false);
+            return;
+          }
+          if (res.status !== 402) {
+            // Non-payment error, stop retrying
+            setAwaitingPayment(false);
+            return;
+          }
+        } catch {
+          // Network error, keep retrying
+        }
+        // Wait 2 seconds before retrying (webhook may still be in-flight)
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+      // Exhausted retries — stop waiting
+      setAwaitingPayment(false);
+    };
+
+    tryConfirm();
+    return () => { cancelled = true; };
+  }, [awaitingPayment, token, id]);
+
+  // Poll for status — keeps running until completed/error so webhook updates are picked up
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
+    let confirmTried = false;
 
     const poll = async () => {
       try {
@@ -110,6 +129,7 @@ export default function AnalysisPage({
         if (!res.ok) {
           setStatus("error");
           setError("Analysis not found");
+          clearInterval(interval);
           return;
         }
         const data = await res.json();
@@ -117,12 +137,24 @@ export default function AnalysisPage({
         setFileName(data.fileName || "");
         if (data.result) setResult(data.result);
         if (data.error) setError(data.error);
-        if (
-          data.status === "completed" ||
-          data.status === "error" ||
-          data.status === "pending"
-        ) {
+        if (data.status === "completed" || data.status === "error") {
           clearInterval(interval);
+          return;
+        }
+        // When pending, try confirm-payment once (handles paid-but-webhook-delayed)
+        // Keep polling regardless so webhook status changes are picked up
+        if (data.status === "pending" && !awaitingPayment && !confirmTried && token) {
+          confirmTried = true;
+          try {
+            await fetch("/api/confirm-payment", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ analysisId: id }),
+            });
+          } catch {}
         }
       } catch {
         // Keep polling on network errors
@@ -132,7 +164,22 @@ export default function AnalysisPage({
     poll();
     interval = setInterval(poll, 2000);
     return () => clearInterval(interval);
-  }, [id]);
+  }, [id, awaitingPayment, token]);
+
+  // Auto-trigger processing when status is "paid" but not yet processing
+  useEffect(() => {
+    if (status !== "paid" || !token || confirmTriggered.current) return;
+    confirmTriggered.current = true;
+
+    fetch("/api/confirm-payment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ analysisId: id }),
+    }).catch(() => {});
+  }, [status, token, id]);
 
   // Progress message rotation
   useEffect(() => {
@@ -143,7 +190,7 @@ export default function AnalysisPage({
     return () => clearInterval(timer);
   }, [status]);
 
-  // Auto-download PDF when analysis completes
+  // Auto-download PDF when analysis completes (watched transition or fresh page load)
   useEffect(() => {
     const wasProcessing =
       prevStatusRef.current === "processing" || prevStatusRef.current === "paid";
@@ -154,11 +201,10 @@ export default function AnalysisPage({
       !autoDownloadDone.current
     ) {
       autoDownloadDone.current = true;
-      // Small delay to let the results render first
-      setTimeout(() => window.print(), 1000);
+      setTimeout(() => generatePDF(result, fileName), 500);
     }
     prevStatusRef.current = status;
-  }, [status, result]);
+  }, [status, result, fileName]);
 
   const handleCheckout = useCallback(async () => {
     setCheckoutLoading(true);
@@ -178,17 +224,10 @@ export default function AnalysisPage({
         return;
       }
 
-      if (paddleLoaded && window.Paddle) {
+      if (paddleLoaded && window.Paddle && data.transactionId) {
         window.Paddle.Checkout.open({
-          items: [
-            {
-              priceId: process.env.NEXT_PUBLIC_PADDLE_PRICE_ID_SINGLE || "",
-              quantity: 1,
-            },
-          ],
-          customData: { analysis_id: id },
+          transactionId: data.transactionId,
           settings: {
-            successUrl: `${window.location.origin}/analysis/${id}?paid=1`,
             displayMode: "overlay",
             theme: "dark",
           },
@@ -253,8 +292,8 @@ export default function AnalysisPage({
     );
   }
 
-  // Processing state
-  if (status === "processing" || status === "paid") {
+  // Processing state (also shown when awaiting webhook after payment)
+  if (status === "processing" || status === "paid" || awaitingPayment) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
@@ -358,7 +397,7 @@ export default function AnalysisPage({
 
   // Completed — Results
   if (status === "completed" && result) {
-    return <ResultsView result={result} fileName={fileName} />;
+    return <ResultsView result={result} fileName={fileName} onDownloadPDF={() => generatePDF(result, fileName)} />;
   }
 
   return null;
@@ -373,9 +412,11 @@ function Spinner() {
 function ResultsView({
   result,
   fileName,
+  onDownloadPDF,
 }: {
   result: AnalysisResult;
   fileName: string;
+  onDownloadPDF: () => void;
 }) {
   const riskColor =
     result.riskScore <= 3
@@ -392,23 +433,15 @@ function ResultsView({
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <div className="no-print flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Agreement Analysis</h1>
-          {fileName && (
-            <p className="mt-1 text-sm text-muted">
-              {fileName.length > 60
-                ? fileName.substring(0, 60) + "..."
-                : fileName}
-            </p>
-          )}
-        </div>
-        <button
-          onClick={() => window.print()}
-          className="rounded-lg border border-card-border px-4 py-2 text-sm font-medium transition-colors hover:bg-card"
-        >
-          Download PDF
-        </button>
+      <div className="no-print">
+        <h1 className="text-2xl font-bold">Agreement Analysis</h1>
+        {fileName && (
+          <p className="mt-1 text-sm text-muted">
+            {fileName.length > 60
+              ? fileName.substring(0, 60) + "..."
+              : fileName}
+          </p>
+        )}
       </div>
 
       <div className="mt-6 flex items-center gap-4 rounded-xl border border-card-border bg-card p-5">
@@ -653,11 +686,11 @@ function ResultsView({
       )}
 
       <div className="no-print mt-8 flex items-center justify-between border-t border-card-border pt-6">
-        <a href="/" className="text-sm text-accent-light hover:underline">
+        <a href="/dashboard" className="text-sm text-accent-light hover:underline">
           Analyze another recording
         </a>
         <button
-          onClick={() => window.print()}
+          onClick={onDownloadPDF}
           className="rounded-lg bg-accent px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-light"
         >
           Download PDF

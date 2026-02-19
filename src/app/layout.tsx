@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     description:
       "Upload meeting recordings and get AI-powered analysis of verbal commitments, deadlines, and red flags.",
     type: "website",
-    url: "https://contractear.com",
+    url: "https://contract-ear.vercel.app",
     siteName: "ContractEar",
   },
   twitter: {

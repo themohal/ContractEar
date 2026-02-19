@@ -59,24 +59,31 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (analysis?.status === "pending") {
-          await supabase
+          // Atomically claim: only update if still "pending"
+          const { data: claimed } = await supabase
             .from("analyses")
             .update({
               status: "paid",
               paddle_transaction_id: transactionId,
               updated_at: new Date().toISOString(),
             })
-            .eq("id", analysisId);
+            .eq("id", analysisId)
+            .eq("status", "pending")
+            .select("id");
 
-          // Increment usage counter
-          if (analysis.user_id) {
-            await incrementUsage(analysis.user_id);
-          }
+          if (!claimed || claimed.length === 0) {
+            // Already picked up by confirm-payment, skip
+            console.log("[Webhook] Analysis already advanced past pending, skipping");
+          } else {
+            // Increment usage counter
+            if (analysis.user_id) {
+              await incrementUsage(analysis.user_id);
+            }
 
-          try {
-            await processAnalysis(analysisId);
-          } catch (err) {
-            console.error("Processing failed in webhook:", err);
+            // Fire-and-forget — don't block the webhook response
+            processAnalysis(analysisId).catch((err) => {
+              console.error("Processing failed in webhook:", err);
+            });
           }
         }
       }

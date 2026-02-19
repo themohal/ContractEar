@@ -50,6 +50,13 @@ export async function processAnalysis(analysisId: string) {
   const model = getModelForPlan(userPlan);
   const maxTokens = getMaxTokensForPlan(userPlan);
 
+  // Atomically claim processing — only proceed if not already completed/errored
+  // This prevents double-processing from concurrent webhook + confirm-payment calls
+  if (analysis.status === "completed" || analysis.status === "error") {
+    console.log(`Analysis ${analysisId} already ${analysis.status}, skipping`);
+    return;
+  }
+
   // Update status to processing
   await supabase
     .from("analyses")
