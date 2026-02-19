@@ -225,7 +225,8 @@ export default function AnalysisPage({
       }
 
       if (paddleLoaded && window.Paddle && data.transactionId) {
-        window.Paddle.Checkout.open({
+        // Paddle.js v2 supports transactionId for server-created transactions
+        (window.Paddle.Checkout.open as (opts: Record<string, unknown>) => void)({
           transactionId: data.transactionId,
           settings: {
             successUrl: `${window.location.origin}/analysis/${id}?paid=1`,
