@@ -25,7 +25,6 @@ export const PLANS: PlanConfig[] = [
       "Commitment extraction",
       "Red flag detection",
       "Risk score & action items",
-      "PDF download",
     ],
   },
   {

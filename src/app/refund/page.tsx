@@ -36,18 +36,23 @@ export default function RefundPage() {
           </p>
           <p className="mt-3">
             If a refund is approved, the cost of any analyses already delivered
-            will be deducted at the per-analysis rate of{" "}
-            <strong className="text-foreground">$3.99 per analysis</strong>.
+            will be deducted{" "}
+            <strong className="text-foreground">as per your plan rate</strong>.
             This applies to all purchase types:
           </p>
           <ul className="mt-3 list-disc space-y-1.5 pl-5">
             <li>
-              <strong>Per-analysis payments ($3.99)</strong> — non-refundable
+              <strong>Pay Per Use ($3.99/analysis)</strong> — non-refundable
               once results are delivered.
             </li>
             <li>
-              <strong>Subscription plans</strong> — refund amount equals the
-              subscription fee minus $3.99 for each analysis used during the
+              <strong>Basic plan ($29/month)</strong> — refund amount equals the
+              subscription fee minus $1.45 for each analysis used during the
+              billing period.
+            </li>
+            <li>
+              <strong>Pro plan ($79/month)</strong> — refund amount equals the
+              subscription fee minus $1.58 for each analysis used during the
               billing period.
             </li>
             <li>
@@ -98,9 +103,10 @@ export default function RefundPage() {
             You may cancel your subscription at any time. Upon cancellation,
             your plan will remain active until the end of the current billing
             cycle. If a refund is requested, the cost of analyses used during
-            that billing period ($3.99 each) will be deducted from the refund
-            amount. After cancellation, your account will revert to the Pay Per
-            Use tier.
+            that billing period will be deducted from the refund amount at your
+            plan&apos;s per-analysis rate (Basic: $1.45/analysis, Pro:
+            $1.58/analysis). After cancellation, your account will revert to
+            no active plan.
           </p>
         </section>
 

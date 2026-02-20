@@ -174,7 +174,8 @@ export default function SignupPage() {
           <a href="/privacy" className="text-accent-light hover:underline">
             Privacy Policy
           </a>
-          . All payments are non-refundable.
+          . If a refund is granted, the cost of any analyses delivered will be
+          deducted as per your plan rate.
         </p>
 
         <p className="mt-4 text-center text-sm text-muted">

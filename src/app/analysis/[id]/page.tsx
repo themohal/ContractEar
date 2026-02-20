@@ -33,10 +33,9 @@ export default function AnalysisPage({
   const [userPlan, setUserPlan] = useState<string>("");
   const [awaitingPayment, setAwaitingPayment] = useState(false);
   const prevStatusRef = useRef<string>("loading");
-  const autoDownloadDone = useRef(false);
   const confirmTriggered = useRef(false);
 
-  const isPro = userPlan === "pro";
+  const canDownloadPDF = userPlan === "pro" || userPlan === "basic";
 
   // Get auth token and user plan
   useEffect(() => {
@@ -201,22 +200,10 @@ export default function AnalysisPage({
     return () => clearInterval(timer);
   }, [status]);
 
-  // Auto-download PDF when analysis completes (pro plan only)
+  // Track previous status for state transitions
   useEffect(() => {
-    const wasProcessing =
-      prevStatusRef.current === "processing" || prevStatusRef.current === "paid";
-    if (
-      wasProcessing &&
-      status === "completed" &&
-      result &&
-      isPro &&
-      !autoDownloadDone.current
-    ) {
-      autoDownloadDone.current = true;
-      setTimeout(() => generatePDF(result, fileName), 500);
-    }
     prevStatusRef.current = status;
-  }, [status, result, fileName, isPro]);
+  }, [status]);
 
   const handleCheckout = useCallback(async () => {
     setCheckoutLoading(true);
@@ -360,7 +347,7 @@ export default function AnalysisPage({
           <div className="mt-6 rounded-xl border border-card-border bg-card p-6">
             <div className="text-3xl font-bold">$3.99</div>
             <p className="mt-1 text-sm text-muted">
-              One-time payment — Non-refundable
+              One-time payment
             </p>
             <ul className="mt-4 space-y-2 text-left text-sm">
               {[
@@ -411,7 +398,7 @@ export default function AnalysisPage({
 
   // Completed — Results
   if (status === "completed" && result) {
-    return <ResultsView result={result} fileName={fileName} isPro={isPro} onDownloadPDF={() => generatePDF(result, fileName)} />;
+    return <ResultsView result={result} fileName={fileName} canDownloadPDF={canDownloadPDF} onDownloadPDF={() => generatePDF(result, fileName)} />;
   }
 
   return null;
@@ -426,12 +413,12 @@ function Spinner() {
 function ResultsView({
   result,
   fileName,
-  isPro,
+  canDownloadPDF,
   onDownloadPDF,
 }: {
   result: AnalysisResult;
   fileName: string;
-  isPro: boolean;
+  canDownloadPDF: boolean;
   onDownloadPDF: () => void;
 }) {
   const riskColor =
@@ -705,7 +692,7 @@ function ResultsView({
         <a href="/dashboard" className="text-sm text-accent-light hover:underline">
           Analyze another recording
         </a>
-        {isPro ? (
+        {canDownloadPDF ? (
           <button
             onClick={onDownloadPDF}
             className="rounded-lg bg-accent px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-light"

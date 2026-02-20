@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { getBrowserSupabase } from "@/lib/supabase";
 import type { UserProfile } from "@/lib/types";
 import { PLANS } from "@/lib/types";
@@ -15,7 +14,6 @@ interface AnalysisItem {
 }
 
 export default function DashboardPage() {
-  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [analyses, setAnalyses] = useState<AnalysisItem[]>([]);
@@ -26,6 +24,7 @@ export default function DashboardPage() {
   const [uploadError, setUploadError] = useState("");
   const [urlInput, setUrlInput] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
 
   const fetchAnalyses = useCallback(
     async (accessToken: string) => {
@@ -92,6 +91,7 @@ export default function DashboardPage() {
   const handleUpload = useCallback(
     async (file: File) => {
       setUploadError("");
+      setUploadSuccess(null);
       setIsUploading(true);
 
       try {
@@ -111,31 +111,22 @@ export default function DashboardPage() {
           return;
         }
 
-        if (data.requiresPayment) {
-          router.push(`/analysis/${data.id}`);
-        } else {
-          await fetch("/api/confirm-payment", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ analysisId: data.id }),
-          });
-          router.push(`/analysis/${data.id}`);
-        }
+        // Show confirmation message and refresh analyses list
+        setUploadSuccess(data.fileName || file.name);
+        await fetchAnalyses(token);
       } catch {
         setUploadError("Upload failed. Please try again.");
       } finally {
         setIsUploading(false);
       }
     },
-    [router, token]
+    [token, fetchAnalyses]
   );
 
   const handleUrlSubmit = useCallback(async () => {
     if (!urlInput.trim()) return;
     setUploadError("");
+    setUploadSuccess(null);
     setIsUploading(true);
 
     try {
@@ -155,23 +146,16 @@ export default function DashboardPage() {
         return;
       }
 
-      if (!data.requiresPayment) {
-        await fetch("/api/confirm-payment", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ analysisId: data.id }),
-        });
-      }
-      router.push(`/analysis/${data.id}`);
+      // Show confirmation message and refresh analyses list
+      setUploadSuccess(data.fileName || urlInput.trim());
+      setUrlInput("");
+      await fetchAnalyses(token);
     } catch {
       setUploadError("Failed to process URL. Please try again.");
     } finally {
       setIsUploading(false);
     }
-  }, [urlInput, router, token]);
+  }, [urlInput, token, fetchAnalyses]);
 
   const handleDelete = useCallback(
     async (analysisId: string) => {
@@ -427,6 +411,33 @@ export default function DashboardPage() {
         {uploadError && (
           <p className="mt-2 text-sm text-danger">{uploadError}</p>
         )}
+
+        {uploadSuccess && (
+          <div className="mt-4 rounded-xl border border-success/30 bg-success/10 p-5">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success/20">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-success">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-semibold text-success">Your recording is ready for analysis</h3>
+                <p className="mt-1 text-sm text-muted">
+                  File: <span className="font-medium text-foreground">{uploadSuccess}</span>
+                </p>
+                <p className="mt-2 text-sm text-muted">
+                  Our AI will transcribe your audio and extract all verbal commitments, deadlines, red flags, and action items.
+                </p>
+                <button
+                  onClick={() => setUploadSuccess(null)}
+                  className="mt-3 text-xs font-medium text-accent-light hover:underline"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       )}
 
@@ -503,7 +514,7 @@ export default function DashboardPage() {
                   >
                     {a.status}
                   </span>
-                  {a.status === "completed" && profile.plan === "pro" && (
+                  {a.status === "completed" && (profile.plan === "pro" || profile.plan === "basic") && (
                     <a
                       href={`/analysis/${a.id}`}
                       className="rounded-lg border border-card-border px-2.5 py-1 text-xs font-medium text-muted transition-colors hover:bg-card hover:text-foreground"

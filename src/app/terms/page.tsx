@@ -65,7 +65,8 @@ export default function TermsPage() {
             service inquiries and handles returns. By making a purchase, you
             also agree to Paddle&apos;s terms of service. All prices are in USD
             unless otherwise stated. All sales are final once results are
-            delivered. Refunds, if approved, are prorated based on usage — see
+            delivered. Refunds, if approved, are subject to deduction of the
+            cost of any analyses delivered as per your plan rate — see
             our{" "}
             <a
               href="/refund"

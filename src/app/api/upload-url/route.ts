@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabase } from "@/lib/supabase";
 import { getAuthUser, unauthorizedResponse, checkUsageLimit, incrementUsage } from "@/lib/auth";
-import { processAnalysis } from "@/lib/process-analysis";
+import { processAnalysisInMemory } from "@/lib/process-analysis";
 import { randomUUID } from "crypto";
 
 export async function POST(request: NextRequest) {
@@ -102,52 +102,36 @@ export async function POST(request: NextRequest) {
     const id = randomUUID();
     const ext = url.split(".").pop()?.split("?")[0]?.substring(0, 5) || "mp3";
     const fileName = `url_audio.${ext}`;
-    const storagePath = `${id}/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from("audio-uploads")
-      .upload(storagePath, buffer, {
-        contentType: contentType || "audio/mpeg",
-      });
-
-    if (uploadError) {
-      return NextResponse.json(
-        { error: "Failed to store audio file" },
-        { status: 500 }
-      );
-    }
-
-    const initialStatus = usage.plan === "single" ? "pending" : "processing";
-
+    // Create analysis record — always start processing immediately
     const { error: insertError } = await supabase.from("analyses").insert({
       id,
       user_id: user.id,
       file_name: url,
-      audio_path: storagePath,
+      audio_path: "",
       source_type: "url",
-      status: initialStatus,
+      status: "processing",
       tier: usage.plan,
     });
 
     if (insertError) {
-      await supabase.storage.from("audio-uploads").remove([storagePath]);
       return NextResponse.json(
         { error: "Failed to create analysis record" },
         { status: 500 }
       );
     }
 
-    // For subscription users, start processing immediately
-    if (usage.plan !== "single") {
-      incrementUsage(user.id).catch(() => {});
-      processAnalysis(id).catch((err) => {
-        console.error("Processing failed in upload-url:", err);
-      });
-    }
+    // Increment usage
+    incrementUsage(user.id).catch(() => {});
+
+    // Process in-memory (fire-and-forget)
+    processAnalysisInMemory(id, buffer, fileName, contentType || "audio/mpeg").catch((err) => {
+      console.error("Processing failed in upload-url:", err);
+    });
 
     return NextResponse.json({
       id,
-      requiresPayment: usage.plan === "single",
+      fileName,
     });
   } catch {
     return NextResponse.json(

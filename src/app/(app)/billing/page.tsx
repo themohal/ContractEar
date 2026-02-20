@@ -312,7 +312,7 @@ export default function BillingPage() {
                     : `${plan.analyses} analyses (${plan.pricePerAnalysis}/each)`}
                 </p>
                 <ul className="mt-3 flex-1 space-y-1.5 text-xs text-muted">
-                  {plan.features.slice(0, 4).map((f) => (
+                  {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-1.5">
                       <svg
                         className="mt-0.5 h-3 w-3 shrink-0 text-success"
@@ -366,7 +366,8 @@ export default function BillingPage() {
           Record. Paddle handles billing, tax collection, and invoicing.
         </p>
         <p className="mt-2 text-sm text-muted">
-          All payments are final and non-refundable. See our{" "}
+          If a refund is granted, the cost of any analysis delivered will be
+          deducted as per your plan rate. See our{" "}
           <a href="/refund" className="text-accent-light hover:underline">
             refund policy
           </a>{" "}
