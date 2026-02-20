@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import { getBrowserSupabase } from "@/lib/supabase";
 
 export default function NavbarAuth() {
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
     const supabase = getBrowserSupabase();
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setLoggedIn(true);
+      setLoggedIn(!!user);
     });
 
     const {
@@ -21,7 +21,8 @@ export default function NavbarAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  if (loggedIn) return null;
+  // Don't render anything until auth state is known (prevents flash)
+  if (loggedIn === null || loggedIn) return null;
 
   return (
     <div className="flex items-center gap-4 text-sm text-muted">
