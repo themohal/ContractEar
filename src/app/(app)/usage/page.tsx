@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getBrowserSupabase } from "@/lib/supabase";
-import type { UserProfile } from "@/lib/types";
+import type { UserProfile, UsageLog } from "@/lib/types";
 
 type DailyPoint = {
   date: string;
@@ -115,6 +115,7 @@ export default function UsagePage() {
   const [stats, setStats] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"daily" | "monthly">("daily");
+  const [usageLogs, setUsageLogs] = useState<(UsageLog & { analyses?: { file_name: string; status: string } })[]>([]);
 
   useEffect(() => {
     const init = async () => {
@@ -126,11 +127,14 @@ export default function UsagePage() {
 
       const token = session.access_token;
 
-      const [profileRes, statsRes] = await Promise.all([
+      const [profileRes, statsRes, logsRes] = await Promise.all([
         fetch("/api/profile", {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch("/api/usage-stats", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch("/api/usage-logs", {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -143,6 +147,11 @@ export default function UsagePage() {
       if (statsRes.ok) {
         const data = await statsRes.json();
         setStats(data);
+      }
+
+      if (logsRes.ok) {
+        const data = await logsRes.json();
+        setUsageLogs(data.logs || []);
       }
 
       setLoading(false);
@@ -322,6 +331,70 @@ export default function UsagePage() {
         <p className="mt-3 text-center text-[10px] text-muted">
           {view === "daily" ? "Last 30 days" : "Last 12 months"}
         </p>
+      </div>
+
+      {/* Usage Log */}
+      <div className="mt-6">
+        <h2 className="text-sm font-semibold">Usage Log</h2>
+        <p className="mt-1 text-xs text-muted">
+          Individual analysis usage records
+        </p>
+        {usageLogs.length === 0 ? (
+          <div className="mt-3 rounded-xl border border-card-border bg-card p-6 text-center">
+            <p className="text-sm text-muted">No usage records yet</p>
+          </div>
+        ) : (
+          <div className="mt-3 overflow-hidden rounded-xl border border-card-border bg-card">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-card-border text-left text-xs font-medium uppercase tracking-wider text-muted">
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">File</th>
+                  <th className="px-4 py-3">Plan</th>
+                  <th className="px-4 py-3 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-card-border">
+                {usageLogs.slice(0, 20).map((log) => (
+                  <tr key={log.id} className="transition-colors hover:bg-card-border/10">
+                    <td className="px-4 py-3 text-xs text-muted">
+                      {new Date(log.created_at).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </td>
+                    <td className="max-w-[200px] truncate px-4 py-3 text-xs">
+                      {log.analyses?.file_name || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent-light">
+                        {log.plan_at_time === "single"
+                          ? "Pay Per Use"
+                          : log.plan_at_time.charAt(0).toUpperCase() + log.plan_at_time.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          log.analyses?.status === "completed"
+                            ? "bg-success/20 text-success"
+                            : log.analyses?.status === "error"
+                              ? "bg-danger/20 text-danger"
+                              : "bg-muted/20 text-muted"
+                        }`}
+                      >
+                        {log.analyses?.status || "—"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -14,7 +14,9 @@ export async function POST(request: NextRequest) {
       const msg =
         usage.plan === "none"
           ? "Please choose a plan before uploading."
-          : `You've reached your monthly limit of ${usage.limit} analyses. Upgrade your plan for more.`;
+          : usage.expired
+            ? "Your billing cycle has expired. Please renew your subscription to continue."
+            : `You've reached your monthly limit of ${usage.limit} analyses. Upgrade your plan for more.`;
       return NextResponse.json({ error: msg }, { status: 403 });
     }
 
@@ -121,8 +123,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Increment usage
-    incrementUsage(user.id).catch(() => {});
+    // Increment usage and log
+    incrementUsage(user.id, id).catch(() => {});
 
     // Process in-memory (fire-and-forget)
     processAnalysisInMemory(id, buffer, fileName, contentType || "audio/mpeg").catch((err) => {

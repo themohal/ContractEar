@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { getBrowserSupabase } from "@/lib/supabase";
-import type { UserProfile } from "@/lib/types";
+import type { UserProfile, BillingRecord } from "@/lib/types";
 import { PLANS } from "@/lib/types";
 
 declare global {
@@ -35,6 +35,7 @@ export default function BillingPage() {
   const [paddleLoaded, setPaddleLoaded] = useState(false);
   const [upgradeLoading, setUpgradeLoading] = useState<string | null>(null);
   const [upgraded, setUpgraded] = useState(false);
+  const [billingRecords, setBillingRecords] = useState<BillingRecord[]>([]);
   const initialPlanRef = useRef<string | null>(null);
 
   // Load Paddle.js
@@ -72,13 +73,22 @@ export default function BillingPage() {
       const accessToken = refreshed.session?.access_token || session.access_token;
       setToken(accessToken);
 
-      const res = await fetch("/api/profile", {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
+      const [profileRes, billingRes] = await Promise.all([
+        fetch("/api/profile", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
+        fetch("/api/billing-history", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
+      ]);
+      if (profileRes.ok) {
+        const data = await profileRes.json();
         setProfile(data.profile);
         initialPlanRef.current = data.profile.plan;
+      }
+      if (billingRes.ok) {
+        const data = await billingRes.json();
+        setBillingRecords(data.records || []);
       }
       setLoading(false);
     };
@@ -355,6 +365,78 @@ export default function BillingPage() {
             );
           })}
         </div>
+      </div>
+
+      {/* Billing History */}
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold">Billing History</h2>
+        <p className="mt-1 text-sm text-muted">
+          Your recent transactions and subscription events
+        </p>
+        {billingRecords.length === 0 ? (
+          <div className="mt-4 rounded-xl border border-card-border bg-card p-6 text-center">
+            <p className="text-sm text-muted">No billing records yet</p>
+          </div>
+        ) : (
+          <div className="mt-4 overflow-hidden rounded-xl border border-card-border bg-card">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-card-border text-left text-xs font-medium uppercase tracking-wider text-muted">
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Event</th>
+                  <th className="px-4 py-3">Plan</th>
+                  <th className="px-4 py-3 text-right">Amount</th>
+                  <th className="px-4 py-3 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-card-border">
+                {billingRecords.map((record) => (
+                  <tr key={record.id} className="transition-colors hover:bg-card-border/10">
+                    <td className="px-4 py-3 text-xs text-muted">
+                      {new Date(record.created_at).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td className="px-4 py-3">
+                      {record.event_type === "subscription_created"
+                        ? "Subscription Started"
+                        : record.event_type === "subscription_renewed"
+                          ? "Subscription Renewed"
+                          : record.event_type === "subscription_canceled"
+                            ? "Subscription Canceled"
+                            : "Single Payment"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent-light">
+                        {record.plan_tier === "single"
+                          ? "Pay Per Use"
+                          : record.plan_tier.charAt(0).toUpperCase() + record.plan_tier.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium">
+                      {record.amount > 0
+                        ? `$${record.amount.toFixed(2)}`
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          record.status === "completed"
+                            ? "bg-success/20 text-success"
+                            : "bg-danger/20 text-danger"
+                        }`}
+                      >
+                        {record.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Payment Info */}

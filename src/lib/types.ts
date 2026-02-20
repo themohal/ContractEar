@@ -136,3 +136,25 @@ export interface UserProfile {
   created_at: string;
   updated_at: string;
 }
+
+export interface BillingRecord {
+  id: string;
+  user_id: string;
+  event_type: "subscription_created" | "subscription_renewed" | "subscription_canceled" | "single_payment";
+  plan_tier: PlanTier;
+  amount: number;
+  currency: string;
+  paddle_transaction_id: string | null;
+  paddle_customer_id: string | null;
+  paddle_subscription_id: string | null;
+  status: "completed" | "refunded";
+  created_at: string;
+}
+
+export interface UsageLog {
+  id: string;
+  user_id: string;
+  analysis_id: string;
+  plan_at_time: PlanTier;
+  created_at: string;
+}

@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     // Increment usage for subscription plans (single is handled in webhook)
     if (analysis.tier !== "single") {
-      await incrementUsage(user.id);
+      await incrementUsage(user.id, analysisId);
     }
 
     processAnalysis(analysisId).catch((err) => {

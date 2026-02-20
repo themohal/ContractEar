@@ -77,6 +77,7 @@ export async function checkUsageLimit(userId: string): Promise<{
   plan: string;
   used: number;
   limit: number;
+  expired?: boolean;
 }> {
   const supabase = getServiceSupabase();
   const { data: profile } = await supabase
@@ -104,7 +105,7 @@ export async function checkUsageLimit(userId: string): Promise<{
     };
   }
 
-  // Check if billing cycle needs reset (monthly)
+  // Check if billing cycle has expired (30+ days without renewal webhook)
   const cycleStart = new Date(profile.billing_cycle_start);
   const now = new Date();
   const daysSinceCycle = Math.floor(
@@ -112,21 +113,14 @@ export async function checkUsageLimit(userId: string): Promise<{
   );
 
   if (daysSinceCycle >= 30) {
-    // Reset cycle
-    await supabase
-      .from("profiles")
-      .update({
-        analyses_used: 0,
-        billing_cycle_start: now.toISOString(),
-        updated_at: now.toISOString(),
-      })
-      .eq("id", userId);
-
+    // Cycle expired — renewal webhook hasn't fired, meaning payment likely failed.
+    // Block access until Paddle sends a successful renewal event.
     return {
-      allowed: true,
+      allowed: false,
       plan: profile.plan,
-      used: 0,
+      used: profile.analyses_used,
       limit: profile.analyses_limit,
+      expired: true,
     };
   }
 
@@ -138,11 +132,11 @@ export async function checkUsageLimit(userId: string): Promise<{
   };
 }
 
-export async function incrementUsage(userId: string) {
+export async function incrementUsage(userId: string, analysisId?: string) {
   const supabase = getServiceSupabase();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("analyses_used")
+    .select("analyses_used, plan")
     .eq("id", userId)
     .single();
 
@@ -155,4 +149,13 @@ export async function incrementUsage(userId: string) {
       updated_at: new Date().toISOString(),
     })
     .eq("id", userId);
+
+  // Insert usage log for tracking
+  if (analysisId) {
+    await supabase.from("usage_logs").insert({
+      user_id: userId,
+      analysis_id: analysisId,
+      plan_at_time: profile.plan || "none",
+    });
+  }
 }
