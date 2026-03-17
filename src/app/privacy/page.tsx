@@ -34,7 +34,7 @@ export default function PrivacyPage() {
               or other personal identifiers unless you contact support.
             </li>
             <li>
-              <strong>Payment data:</strong> Processed entirely by Paddle, our
+              <strong>Payment data:</strong> Processed entirely by Lemon Squeezy, our
               Merchant of Record. We do not store credit card information.
             </li>
           </ul>
@@ -77,7 +77,7 @@ export default function PrivacyPage() {
               <strong>Supabase:</strong> For database and temporary file storage.
             </li>
             <li>
-              <strong>Paddle:</strong> For payment processing (Merchant of
+              <strong>Lemon Squeezy:</strong> For payment processing (Merchant of
               Record).
             </li>
             <li>

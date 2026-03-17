@@ -60,10 +60,10 @@ export default function TermsPage() {
           <p>
             Kraken AI, through ContractEar, charges a one-time fee per audio
             analysis or a recurring subscription fee. Our order process is
-            conducted by our online reseller Paddle.com. Paddle.com is the
-            Merchant of Record for all our orders. Paddle provides all customer
+            conducted by our online reseller Lemon Squeezy. Lemon Squeezy is the
+            Merchant of Record for all our orders. Lemon Squeezy provides all customer
             service inquiries and handles returns. By making a purchase, you
-            also agree to Paddle&apos;s terms of service. All prices are in USD
+            also agree to Lemon Squeezy&apos;s terms of service. All prices are in USD
             unless otherwise stated. All sales are final once results are
             delivered. Refunds, if approved, are subject to deduction of the
             cost of any analyses delivered as per your plan rate — see
@@ -146,7 +146,7 @@ export default function TermsPage() {
             ContractEar accepts voluntary one-time support contributions to
             help cover the cost of running processing, hosting, and
             infrastructure services. These contributions are processed as
-            one-time purchases by Paddle.com, our Merchant of Record, and are
+            one-time purchases by Lemon Squeezy, our Merchant of Record, and are
             subject to the same terms as all other purchases. Contributions do
             not entitle the buyer to any additional product, feature, or service
             beyond what is already available. All contributions are final and

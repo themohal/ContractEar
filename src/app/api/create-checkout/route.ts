@@ -16,37 +16,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const paddleBase =
-      process.env.NEXT_PUBLIC_PADDLE_ENV === "sandbox"
-        ? "sandbox-api.paddle.com"
-        : "api.paddle.com";
-
-    const response = await fetch(`https://${paddleBase}/transactions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.PADDLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        items: [
-          {
-            price_id: process.env.NEXT_PUBLIC_PADDLE_PRICE_ID_SINGLE,
-            quantity: 1,
-          },
-        ],
-        custom_data: { analysis_id: analysisId, user_id: user.id },
-        checkout: {
-          settings: {
-            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/analysis/${analysisId}?paid=1`,
-            display_mode: "overlay",
-            theme: "dark",
-          },
+    const response = await fetch(
+      "https://api.lemonsqueezy.com/v1/checkouts",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.LEMONSQUEEZY_API_KEY}`,
+          Accept: "application/vnd.api+json",
+          "Content-Type": "application/vnd.api+json",
         },
-      }),
-    });
+        body: JSON.stringify({
+          data: {
+            type: "checkouts",
+            attributes: {
+              checkout_data: {
+                custom: {
+                  analysis_id: analysisId,
+                  user_id: user.id,
+                },
+              },
+              product_options: {
+                redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/analysis/${analysisId}?paid=1`,
+              },
+            },
+            relationships: {
+              store: {
+                data: {
+                  type: "stores",
+                  id: process.env.NEXT_PUBLIC_LEMONSQUEEZY_STORE_ID,
+                },
+              },
+              variant: {
+                data: {
+                  type: "variants",
+                  id: process.env.NEXT_PUBLIC_LEMONSQUEEZY_VARIANT_ID_SINGLE,
+                },
+              },
+            },
+          },
+        }),
+      }
+    );
 
     if (!response.ok) {
-      console.error("Paddle API error:", await response.text());
+      console.error("Lemon Squeezy API error:", await response.text());
       return NextResponse.json(
         { error: "Failed to create checkout" },
         { status: 500 }
@@ -54,19 +67,18 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    const transactionId = data.data.id;
+    const checkoutUrl = data.data.attributes.url;
 
-    // Save the Paddle transaction ID so we can verify payment later
+    // Save a reference so we can track this checkout
     const supabase = getServiceSupabase();
     await supabase
       .from("analyses")
       .update({
-        paddle_transaction_id: transactionId,
         updated_at: new Date().toISOString(),
       })
       .eq("id", analysisId);
 
-    return NextResponse.json({ transactionId });
+    return NextResponse.json({ checkoutUrl });
   } catch {
     return NextResponse.json(
       { error: "Internal server error" },

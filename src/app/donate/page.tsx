@@ -2,11 +2,21 @@
 
 import { useState, useEffect, useCallback } from "react";
 
+declare global {
+  interface Window {
+    createLemonSqueezy?: () => void;
+    LemonSqueezy?: {
+      Url: {
+        Open: (url: string) => void;
+      };
+    };
+  }
+}
+
 const DONATION_OPTIONS = [
   {
     amount: 5,
     label: "$5",
-    priceEnvKey: "NEXT_PUBLIC_PADDLE_PRICE_ID_DONATE_5",
     description: "Helps cover server and processing costs for several analyses.",
     icon: (
       <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -15,7 +25,6 @@ const DONATION_OPTIONS = [
   {
     amount: 10,
     label: "$10",
-    priceEnvKey: "NEXT_PUBLIC_PADDLE_PRICE_ID_DONATE_10",
     description: "Helps keep ContractEar running and supports future improvements.",
     icon: (
       <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
@@ -23,61 +32,49 @@ const DONATION_OPTIONS = [
   },
 ];
 
-const PRICE_IDS: Record<number, string> = {
-  5: process.env.NEXT_PUBLIC_PADDLE_PRICE_ID_DONATE_5 || "",
-  10: process.env.NEXT_PUBLIC_PADDLE_PRICE_ID_DONATE_10 || "",
+const VARIANT_IDS: Record<number, string> = {
+  5: process.env.NEXT_PUBLIC_LEMONSQUEEZY_VARIANT_ID_DONATE_5 || "",
+  10: process.env.NEXT_PUBLIC_LEMONSQUEEZY_VARIANT_ID_DONATE_10 || "",
 };
 
 export default function DonatePage() {
-  const [paddleLoaded, setPaddleLoaded] = useState(false);
+  const [lsLoaded, setLsLoaded] = useState(false);
   const [loading, setLoading] = useState<number | null>(null);
 
   useEffect(() => {
-    if (window.Paddle) {
-      setPaddleLoaded(true);
+    if (window.LemonSqueezy) {
+      setLsLoaded(true);
       return;
     }
     const script = document.createElement("script");
-    script.src = "https://cdn.paddle.com/paddle/v2/paddle.js";
+    script.src = "https://app.lemonsqueezy.com/js/lemon.js";
     script.async = true;
     script.onload = () => {
-      if (window.Paddle) {
-        window.Paddle.Environment.set(
-          process.env.NEXT_PUBLIC_PADDLE_ENV || "sandbox"
-        );
-        window.Paddle.Initialize({
-          token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || "",
-        });
-        setPaddleLoaded(true);
-      }
+      window.createLemonSqueezy?.();
+      setLsLoaded(true);
     };
     document.head.appendChild(script);
   }, []);
 
   const handleDonate = useCallback(
-    (amount: number) => {
-      if (!window.Paddle || !paddleLoaded) return;
-      const priceId = PRICE_IDS[amount];
-      if (!priceId) {
+    async (amount: number) => {
+      if (!window.LemonSqueezy || !lsLoaded) return;
+      const variantId = VARIANT_IDS[amount];
+      if (!variantId) {
         alert("Donation is not available at this time. Please try again later.");
         return;
       }
       setLoading(amount);
       try {
-        window.Paddle.Checkout.open({
-          items: [{ priceId, quantity: 1 }],
-          customData: { type: "donation" },
-          settings: {
-            displayMode: "overlay",
-            theme: "dark",
-            successUrl: `${process.env.NEXT_PUBLIC_APP_URL || ""}/donate?success=1`,
-          },
-        });
+        // Create checkout via Lemon Squeezy API
+        const storeId = process.env.NEXT_PUBLIC_LEMONSQUEEZY_STORE_ID || "";
+        const checkoutUrl = `https://app.lemonsqueezy.com/checkout/buy/${variantId}?checkout[custom][type]=donation`;
+        window.LemonSqueezy.Url.Open(checkoutUrl);
       } finally {
         setLoading(null);
       }
     },
-    [paddleLoaded]
+    [lsLoaded]
   );
 
   return (
@@ -115,7 +112,7 @@ export default function DonatePage() {
             <p className="mt-2 text-sm text-muted">{option.description}</p>
             <button
               onClick={() => handleDonate(option.amount)}
-              disabled={!paddleLoaded || loading === option.amount}
+              disabled={!lsLoaded || loading === option.amount}
               className="mt-6 w-full rounded-lg bg-accent px-6 py-2.5 font-medium text-white transition-colors hover:bg-accent-light disabled:opacity-50"
             >
               {loading === option.amount
@@ -142,15 +139,15 @@ export default function DonatePage() {
       <p className="mt-6 text-center text-xs text-muted">
         All payments are processed securely by our order reseller{" "}
         <a
-          href="https://www.paddle.com"
+          href="https://www.lemonsqueezy.com"
           className="text-accent-light hover:underline"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Paddle.com
+          Lemon Squeezy
         </a>
-        . Paddle.com is the Merchant of Record for all our orders. Paddle
-        provides all customer service inquiries and handles returns.
+        . Lemon Squeezy is the Merchant of Record for all our orders. Lemon
+        Squeezy provides all customer service inquiries and handles returns.
         Contributions are one-time payments to help cover the cost of services.
         All contributions are final and non-refundable.
       </p>

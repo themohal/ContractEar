@@ -114,7 +114,7 @@ export async function checkUsageLimit(userId: string): Promise<{
 
   if (daysSinceCycle >= 30) {
     // Cycle expired — renewal webhook hasn't fired, meaning payment likely failed.
-    // Block access until Paddle sends a successful renewal event.
+    // Block access until Lemon Squeezy sends a successful renewal event.
     return {
       allowed: false,
       plan: profile.plan,

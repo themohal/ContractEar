@@ -12,45 +12,65 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
     }
 
-    const priceId =
+    const variantId =
       tier === "basic"
-        ? process.env.NEXT_PUBLIC_PADDLE_PRICE_ID_BASIC
-        : process.env.NEXT_PUBLIC_PADDLE_PRICE_ID_PRO;
+        ? process.env.NEXT_PUBLIC_LEMONSQUEEZY_VARIANT_ID_BASIC
+        : process.env.NEXT_PUBLIC_LEMONSQUEEZY_VARIANT_ID_PRO;
 
-    if (!priceId) {
+    if (!variantId) {
       return NextResponse.json(
-        { error: "Price not configured" },
+        { error: "Variant not configured" },
         { status: 500 }
       );
     }
 
-    // Create a Paddle subscription checkout
-    const paddleBase =
-      process.env.NEXT_PUBLIC_PADDLE_ENV === "sandbox"
-        ? "sandbox-api.paddle.com"
-        : "api.paddle.com";
+    console.log("[create-subscription] Store ID:", process.env.NEXT_PUBLIC_LEMONSQUEEZY_STORE_ID);
+    console.log("[create-subscription] Variant ID:", variantId);
 
-    const response = await fetch(`https://${paddleBase}/transactions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.PADDLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        items: [{ price_id: priceId, quantity: 1 }],
-        custom_data: { user_id: user.id, tier },
-        checkout: {
-          settings: {
-            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?upgraded=1`,
-            display_mode: "overlay",
-            theme: "dark",
-          },
+    const response = await fetch(
+      "https://api.lemonsqueezy.com/v1/checkouts",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.LEMONSQUEEZY_API_KEY}`,
+          Accept: "application/vnd.api+json",
+          "Content-Type": "application/vnd.api+json",
         },
-      }),
-    });
+        body: JSON.stringify({
+          data: {
+            type: "checkouts",
+            attributes: {
+              checkout_data: {
+                custom: {
+                  user_id: user.id,
+                  tier,
+                },
+              },
+              product_options: {
+                redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?upgraded=1`,
+              },
+            },
+            relationships: {
+              store: {
+                data: {
+                  type: "stores",
+                  id: process.env.NEXT_PUBLIC_LEMONSQUEEZY_STORE_ID,
+                },
+              },
+              variant: {
+                data: {
+                  type: "variants",
+                  id: variantId,
+                },
+              },
+            },
+          },
+        }),
+      }
+    );
 
     if (!response.ok) {
-      console.error("Paddle API error:", await response.text());
+      console.error("Lemon Squeezy API error:", await response.text());
       return NextResponse.json(
         { error: "Failed to create subscription checkout" },
         { status: 500 }
@@ -58,7 +78,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    return NextResponse.json({ transactionId: data.data.id });
+    return NextResponse.json({ checkoutUrl: data.data.attributes.url });
   } catch {
     return NextResponse.json(
       { error: "Internal server error" },

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Refund Policy - ContractEar",
   description:
-    "Refund Policy for ContractEar. Refunds are prorated based on usage. Handled by Paddle.",
+    "Refund Policy for ContractEar. Refunds are prorated based on usage. Handled by Lemon Squeezy.",
 };
 
 export default function RefundPage() {
@@ -16,7 +16,7 @@ export default function RefundPage() {
         <p className="text-sm font-medium text-accent-light">
           All sales are final once analysis results have been delivered. If a
           refund is granted, usage costs are deducted. All refunds are handled
-          by Paddle, our Merchant of Record.
+          by Lemon Squeezy, our Merchant of Record.
         </p>
       </div>
 
@@ -67,26 +67,26 @@ export default function RefundPage() {
             How to Request a Refund
           </h2>
           <p>
-            All refunds are handled by Paddle.com, our Merchant of Record. To
+            All refunds are handled by Lemon Squeezy, our Merchant of Record. To
             request a refund:
           </p>
           <ul className="mt-3 list-disc space-y-1.5 pl-5">
             <li>
-              Use the receipt email you received from Paddle at the time of
+              Use the receipt email you received from Lemon Squeezy at the time of
               purchase — it contains a link to manage your order and request a
               refund.
             </li>
             <li>
               Or visit{" "}
               <a
-                href="https://www.paddle.com/help"
+                href="https://www.lemonsqueezy.com/help"
                 className="text-accent-light hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                paddle.com/help
+                lemonsqueezy.com/help
               </a>{" "}
-              to contact Paddle&apos;s support team directly.
+              to contact Lemon Squeezy&apos;s support team directly.
             </li>
           </ul>
           <p className="mt-3">
@@ -115,18 +115,18 @@ export default function RefundPage() {
             Merchant of Record
           </h2>
           <p>
-            Our order process is conducted by our online reseller Paddle.com.
-            Paddle.com is the Merchant of Record for all our orders. Paddle
-            provides all customer service inquiries and handles returns. For any
-            refund or billing questions, please contact Paddle directly through
-            your receipt email or at{" "}
+            Our order process is conducted by our online reseller Lemon Squeezy.
+            Lemon Squeezy is the Merchant of Record for all our orders. Lemon
+            Squeezy provides all customer service inquiries and handles returns.
+            For any refund or billing questions, please contact Lemon Squeezy
+            directly through your receipt email or at{" "}
             <a
-              href="https://www.paddle.com/help"
+              href="https://www.lemonsqueezy.com/help"
               className="text-accent-light hover:underline"
               target="_blank"
               rel="noopener noreferrer"
             >
-              paddle.com/help
+              lemonsqueezy.com/help
             </a>
             .
           </p>

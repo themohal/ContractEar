@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyPaddleWebhook } from "@/lib/paddle";
+import { verifyLemonSqueezyWebhook } from "@/lib/lemonsqueezy";
 import { getServiceSupabase } from "@/lib/supabase";
 import { processAnalysis } from "@/lib/process-analysis";
 import { incrementUsage } from "@/lib/auth";
@@ -7,11 +7,11 @@ import { incrementUsage } from "@/lib/auth";
 export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text();
-    const signature = request.headers.get("paddle-signature");
+    const signature = request.headers.get("x-signature");
 
     console.log("[Webhook] Received event");
     console.log("[Webhook] Has signature:", !!signature);
-    console.log("[Webhook] Has secret:", !!process.env.PADDLE_WEBHOOK_SECRET);
+    console.log("[Webhook] Has secret:", !!process.env.LEMONSQUEEZY_WEBHOOK_SECRET);
 
     if (!signature) {
       console.log("[Webhook] REJECTED: Missing signature");
@@ -21,10 +21,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isValid = verifyPaddleWebhook(
+    const isValid = verifyLemonSqueezyWebhook(
       rawBody,
       signature,
-      process.env.PADDLE_WEBHOOK_SECRET!
+      process.env.LEMONSQUEEZY_WEBHOOK_SECRET!
     );
 
     console.log("[Webhook] Signature valid:", isValid);
@@ -39,15 +39,17 @@ export async function POST(request: NextRequest) {
 
     const event = JSON.parse(rawBody);
     const supabase = getServiceSupabase();
+    const eventName = event.meta?.event_name;
+    const customData = event.meta?.custom_data;
 
-    console.log("[Webhook] Event type:", event.event_type);
-    console.log("[Webhook] Custom data:", JSON.stringify(event.data?.custom_data));
+    console.log("[Webhook] Event type:", eventName);
+    console.log("[Webhook] Custom data:", JSON.stringify(customData));
 
-    // Handle single analysis payment
-    if (event.event_type === "transaction.completed") {
-      const customData = event.data?.custom_data;
-      const transactionId = event.data?.id;
-      const paddleAmount = parseFloat(event.data?.details?.totals?.total || "0") / 100;
+    // Handle single analysis payment (one-time order)
+    if (eventName === "order_created") {
+      const orderId = String(event.data?.id);
+      const lsAmount = parseFloat(event.data?.attributes?.total_formatted?.replace(/[^0-9.]/g, "") || "0");
+      const customerId = String(event.data?.attributes?.customer_id || "");
 
       // Single analysis payment
       if (customData?.analysis_id) {
@@ -65,7 +67,7 @@ export async function POST(request: NextRequest) {
             .from("analyses")
             .update({
               status: "paid",
-              paddle_transaction_id: transactionId,
+              ls_order_id: orderId,
               updated_at: new Date().toISOString(),
             })
             .eq("id", analysisId)
@@ -73,10 +75,8 @@ export async function POST(request: NextRequest) {
             .select("id");
 
           if (!claimed || claimed.length === 0) {
-            // Already picked up by confirm-payment, skip
             console.log("[Webhook] Analysis already advanced past pending, skipping");
           } else {
-            // Increment usage counter and log
             if (analysis.user_id) {
               await incrementUsage(analysis.user_id, analysisId);
             }
@@ -87,15 +87,14 @@ export async function POST(request: NextRequest) {
                 user_id: analysis.user_id,
                 event_type: "single_payment",
                 plan_tier: "single",
-                amount: paddleAmount || 3.99,
-                currency: event.data?.currency_code || "USD",
-                paddle_transaction_id: transactionId,
-                paddle_customer_id: event.data?.customer_id || null,
+                amount: lsAmount || 3.99,
+                currency: event.data?.attributes?.currency || "USD",
+                ls_order_id: orderId,
+                ls_customer_id: customerId || null,
                 status: "completed",
               });
             }
 
-            // Fire-and-forget — don't block the webhook response
             processAnalysis(analysisId).catch((err) => {
               console.error("Processing failed in webhook:", err);
             });
@@ -103,7 +102,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Plan payment (subscription or pay-per-use activation)
+      // Plan payment (one-time tier activation via order)
       if (customData?.tier && customData?.user_id) {
         const { tier, user_id } = customData;
         console.log("[Webhook] Updating plan for user:", user_id, "to tier:", tier);
@@ -125,8 +124,8 @@ export async function POST(request: NextRequest) {
             analyses_limit: limits[tier] || 0,
             analyses_used: 0,
             billing_cycle_start: new Date().toISOString(),
-            paddle_subscription_id: transactionId,
-            paddle_customer_id: event.data?.customer_id || null,
+            ls_subscription_id: null,
+            ls_customer_id: customerId || null,
             updated_at: new Date().toISOString(),
           })
           .eq("id", user_id);
@@ -137,84 +136,108 @@ export async function POST(request: NextRequest) {
           console.log("[Webhook] Profile updated successfully to plan:", tier);
         }
 
-        // Insert billing record for plan subscription
         const eventType = tier === "single" ? "single_payment" : "subscription_created";
         await supabase.from("billing_records").insert({
           user_id,
           event_type: eventType,
           plan_tier: tier,
-          amount: paddleAmount || planPrices[tier] || 0,
-          currency: event.data?.currency_code || "USD",
-          paddle_transaction_id: transactionId,
-          paddle_customer_id: event.data?.customer_id || null,
-          paddle_subscription_id: tier !== "single" ? transactionId : null,
+          amount: lsAmount || planPrices[tier] || 0,
+          currency: event.data?.attributes?.currency || "USD",
+          ls_order_id: orderId,
+          ls_customer_id: customerId || null,
           status: "completed",
         });
       }
     }
 
-    // Handle subscription renewal (Paddle sends transaction.paid for recurring charges)
-    if (event.event_type === "transaction.paid") {
-      const customData = event.data?.custom_data;
-      const transactionId = event.data?.id;
-      const paddleAmount = parseFloat(event.data?.details?.totals?.total || "0") / 100;
-      const subscriptionId = event.data?.subscription_id;
+    // Handle subscription created
+    if (eventName === "subscription_created") {
+      const customerId = String(event.data?.attributes?.customer_id || "");
+      const subscriptionId = String(event.data?.id);
 
-      // Only handle if it's a subscription renewal (has subscription_id but no tier in custom_data)
-      // New subscriptions are handled by transaction.completed above
-      if (subscriptionId && !customData?.tier) {
-        // Find user by subscription ID or customer ID
-        const customerId = event.data?.customer_id;
-        const { data: userProfile } = await supabase
+      if (customData?.tier && customData?.user_id) {
+        const { tier, user_id } = customData;
+        const limits: Record<string, number> = { basic: 20, pro: 50 };
+        const planPrices: Record<string, number> = { basic: 29, pro: 79 };
+
+        await supabase
           .from("profiles")
-          .select("id, plan, analyses_limit")
-          .or(`paddle_subscription_id.eq.${subscriptionId},paddle_customer_id.eq.${customerId}`)
-          .single();
+          .update({
+            plan: tier,
+            analyses_limit: limits[tier] || 0,
+            analyses_used: 0,
+            billing_cycle_start: new Date().toISOString(),
+            ls_subscription_id: subscriptionId,
+            ls_customer_id: customerId || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", user_id);
 
-        if (userProfile && userProfile.plan !== "none" && userProfile.plan !== "single") {
-          console.log("[Webhook] Subscription renewal for user:", userProfile.id, "plan:", userProfile.plan);
+        await supabase.from("billing_records").insert({
+          user_id,
+          event_type: "subscription_created",
+          plan_tier: tier,
+          amount: planPrices[tier] || 0,
+          currency: event.data?.attributes?.currency || "USD",
+          ls_customer_id: customerId || null,
+          ls_subscription_id: subscriptionId,
+          status: "completed",
+        });
+      }
+    }
 
-          // Reset usage for new billing cycle
-          await supabase
-            .from("profiles")
-            .update({
-              analyses_used: 0,
-              billing_cycle_start: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", userProfile.id);
+    // Handle subscription payment (renewal)
+    if (eventName === "subscription_payment_success") {
+      const subscriptionId = String(event.data?.attributes?.subscription_id || "");
+      const customerId = String(event.data?.attributes?.customer_id || "");
+      const lsAmount = parseFloat(event.data?.attributes?.total_formatted?.replace(/[^0-9.]/g, "") || "0");
 
-          // Insert billing record for renewal
-          const planPrices: Record<string, number> = {
-            basic: 29,
-            pro: 79,
-          };
-          await supabase.from("billing_records").insert({
-            user_id: userProfile.id,
-            event_type: "subscription_renewed",
-            plan_tier: userProfile.plan,
-            amount: paddleAmount || planPrices[userProfile.plan] || 0,
-            currency: event.data?.currency_code || "USD",
-            paddle_transaction_id: transactionId,
-            paddle_customer_id: customerId || null,
-            paddle_subscription_id: subscriptionId,
-            status: "completed",
-          });
+      // Find user by subscription ID or customer ID
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("id, plan, analyses_limit")
+        .or(`ls_subscription_id.eq.${subscriptionId},ls_customer_id.eq.${customerId}`)
+        .single();
 
-          console.log("[Webhook] Renewal processed, usage reset for user:", userProfile.id);
-        }
+      if (userProfile && userProfile.plan !== "none" && userProfile.plan !== "single") {
+        console.log("[Webhook] Subscription renewal for user:", userProfile.id, "plan:", userProfile.plan);
+
+        // Reset usage for new billing cycle
+        await supabase
+          .from("profiles")
+          .update({
+            analyses_used: 0,
+            billing_cycle_start: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", userProfile.id);
+
+        const planPrices: Record<string, number> = { basic: 29, pro: 79 };
+        await supabase.from("billing_records").insert({
+          user_id: userProfile.id,
+          event_type: "subscription_renewed",
+          plan_tier: userProfile.plan,
+          amount: lsAmount || planPrices[userProfile.plan] || 0,
+          currency: event.data?.attributes?.currency || "USD",
+          ls_customer_id: customerId || null,
+          ls_subscription_id: subscriptionId,
+          status: "completed",
+        });
+
+        console.log("[Webhook] Renewal processed, usage reset for user:", userProfile.id);
       }
     }
 
     // Handle subscription cancellation
-    if (event.event_type === "subscription.canceled") {
-      const customerId = event.data?.customer_id;
+    if (eventName === "subscription_cancelled") {
+      const customerId = String(event.data?.attributes?.customer_id || "");
+      const subscriptionId = String(event.data?.id);
+
       if (customerId) {
-        // Find user by customer ID before updating
         const { data: userProfile } = await supabase
           .from("profiles")
           .select("id, plan")
-          .eq("paddle_customer_id", customerId)
+          .eq("ls_customer_id", customerId)
           .single();
 
         await supabase
@@ -222,12 +245,11 @@ export async function POST(request: NextRequest) {
           .update({
             plan: "none",
             analyses_limit: 0,
-            paddle_subscription_id: null,
+            ls_subscription_id: null,
             updated_at: new Date().toISOString(),
           })
-          .eq("paddle_customer_id", customerId);
+          .eq("ls_customer_id", customerId);
 
-        // Insert billing record for cancellation
         if (userProfile) {
           await supabase.from("billing_records").insert({
             user_id: userProfile.id,
@@ -235,8 +257,8 @@ export async function POST(request: NextRequest) {
             plan_tier: userProfile.plan || "none",
             amount: 0,
             currency: "USD",
-            paddle_customer_id: customerId,
-            paddle_subscription_id: event.data?.id || null,
+            ls_customer_id: customerId,
+            ls_subscription_id: subscriptionId || null,
             status: "completed",
           });
         }

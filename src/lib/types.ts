@@ -118,7 +118,7 @@ export interface AnalysisRow {
   transcript: string | null;
   result: AnalysisResult | null;
   processing_error: string | null;
-  paddle_transaction_id: string | null;
+  ls_order_id: string | null;
   tier: PlanTier;
   created_at: string;
   updated_at: string;
@@ -131,8 +131,8 @@ export interface UserProfile {
   analyses_used: number;
   analyses_limit: number;
   billing_cycle_start: string;
-  paddle_subscription_id: string | null;
-  paddle_customer_id: string | null;
+  ls_subscription_id: string | null;
+  ls_customer_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -144,9 +144,9 @@ export interface BillingRecord {
   plan_tier: PlanTier;
   amount: number;
   currency: string;
-  paddle_transaction_id: string | null;
-  paddle_customer_id: string | null;
-  paddle_subscription_id: string | null;
+  ls_order_id: string | null;
+  ls_customer_id: string | null;
+  ls_subscription_id: string | null;
   status: "completed" | "refunded";
   created_at: string;
 }

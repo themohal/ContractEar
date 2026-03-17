@@ -27,7 +27,7 @@ export default function AnalysisPage({
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>("");
   const [progressIndex, setProgressIndex] = useState(0);
-  const [paddleLoaded, setPaddleLoaded] = useState(false);
+  const [lsLoaded, setLsLoaded] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [token, setToken] = useState<string>("");
   const [userPlan, setUserPlan] = useState<string>("");
@@ -55,24 +55,19 @@ export default function AnalysisPage({
     });
   }, []);
 
-  // Load Paddle.js
+  // Load Lemon Squeezy JS
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (window.Paddle) {
-      setPaddleLoaded(true);
+    if (window.LemonSqueezy) {
+      setLsLoaded(true);
       return;
     }
     const script = document.createElement("script");
-    script.src = "https://cdn.paddle.com/paddle/v2/paddle.js";
+    script.src = "https://app.lemonsqueezy.com/js/lemon.js";
     script.async = true;
     script.onload = () => {
-      window.Paddle?.Environment.set(
-        process.env.NEXT_PUBLIC_PADDLE_ENV || "sandbox"
-      );
-      window.Paddle?.Initialize({
-        token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || "",
-      });
-      setPaddleLoaded(true);
+      window.createLemonSqueezy?.();
+      setLsLoaded(true);
     };
     document.head.appendChild(script);
   }, []);
@@ -223,23 +218,15 @@ export default function AnalysisPage({
         return;
       }
 
-      if (paddleLoaded && window.Paddle && data.transactionId) {
-        // Paddle.js v2 supports transactionId for server-created transactions
-        (window.Paddle.Checkout.open as (opts: Record<string, unknown>) => void)({
-          transactionId: data.transactionId,
-          settings: {
-            successUrl: `${window.location.origin}/analysis/${id}?paid=1`,
-            displayMode: "overlay",
-            theme: "dark",
-          },
-        });
+      if (lsLoaded && window.LemonSqueezy && data.checkoutUrl) {
+        window.LemonSqueezy.Url.Open(data.checkoutUrl);
       }
     } catch {
       setError("Failed to start checkout. Please try again.");
     } finally {
       setCheckoutLoading(false);
     }
-  }, [id, paddleLoaded, token]);
+  }, [id, lsLoaded, token]);
 
   // Loading state
   if (status === "loading") {
@@ -374,7 +361,7 @@ export default function AnalysisPage({
             </ul>
             <button
               onClick={handleCheckout}
-              disabled={checkoutLoading || !paddleLoaded}
+              disabled={checkoutLoading || !lsLoaded}
               className="mt-6 w-full rounded-lg bg-accent py-3 font-medium text-white transition-colors hover:bg-accent-light disabled:opacity-60"
             >
               {checkoutLoading ? "Loading..." : "Analyze Now — $3.99"}

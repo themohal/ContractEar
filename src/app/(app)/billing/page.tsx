@@ -8,20 +8,10 @@ import { PLANS } from "@/lib/types";
 
 declare global {
   interface Window {
-    Paddle?: {
-      Environment: { set: (env: string) => void };
-      Initialize: (config: { token: string }) => void;
-      Checkout: {
-        open: (config: {
-          items?: { priceId: string; quantity: number }[];
-          customData?: Record<string, string>;
-          settings?: {
-            successUrl?: string;
-            displayMode?: string;
-            theme?: string;
-          };
-          transactionId?: string;
-        }) => void;
+    createLemonSqueezy?: () => void;
+    LemonSqueezy?: {
+      Url: {
+        Open: (url: string) => void;
       };
     };
   }
@@ -32,30 +22,25 @@ export default function BillingPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState("");
-  const [paddleLoaded, setPaddleLoaded] = useState(false);
+  const [lsLoaded, setLsLoaded] = useState(false);
   const [upgradeLoading, setUpgradeLoading] = useState<string | null>(null);
   const [upgraded, setUpgraded] = useState(false);
   const [billingRecords, setBillingRecords] = useState<BillingRecord[]>([]);
   const initialPlanRef = useRef<string | null>(null);
 
-  // Load Paddle.js
+  // Load Lemon Squeezy JS
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (window.Paddle) {
-      setPaddleLoaded(true);
+    if (window.LemonSqueezy) {
+      setLsLoaded(true);
       return;
     }
     const script = document.createElement("script");
-    script.src = "https://cdn.paddle.com/paddle/v2/paddle.js";
+    script.src = "https://app.lemonsqueezy.com/js/lemon.js";
     script.async = true;
     script.onload = () => {
-      window.Paddle?.Environment.set(
-        process.env.NEXT_PUBLIC_PADDLE_ENV || "sandbox"
-      );
-      window.Paddle?.Initialize({
-        token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || "",
-      });
-      setPaddleLoaded(true);
+      window.createLemonSqueezy?.();
+      setLsLoaded(true);
     };
     document.head.appendChild(script);
   }, []);
@@ -95,7 +80,7 @@ export default function BillingPage() {
     init();
   }, []);
 
-  // Poll for profile update after Paddle payment redirect
+  // Poll for profile update after payment redirect
   useEffect(() => {
     if (searchParams.get("upgraded") !== "1" || !token) return;
     setUpgraded(true);
@@ -106,7 +91,6 @@ export default function BillingPage() {
       });
       if (!res.ok) return;
       const data = await res.json();
-      // Profile updated by webhook — plan changed from initial
       if (data.profile.plan !== initialPlanRef.current) {
         setProfile(data.profile);
         setUpgraded(false);
@@ -115,7 +99,6 @@ export default function BillingPage() {
       }
     }, 2000);
 
-    // Stop polling after 30 seconds
     const timeout = setTimeout(() => {
       clearInterval(poll);
       setUpgraded(false);
@@ -129,30 +112,35 @@ export default function BillingPage() {
 
   const handleSelectPlan = useCallback(
     async (tier: string) => {
-      if (!paddleLoaded || !window.Paddle || !token) return;
+      if (!lsLoaded || !token) return;
       setUpgradeLoading(tier);
       try {
-        const priceId =
+        // For single tier, use create-checkout; for subscriptions, use create-subscription
+        const endpoint =
+          tier === "single" ? "/api/create-checkout" : "/api/create-subscription";
+        const body =
           tier === "single"
-            ? process.env.NEXT_PUBLIC_PADDLE_PRICE_ID_SINGLE
-            : tier === "basic"
-              ? process.env.NEXT_PUBLIC_PADDLE_PRICE_ID_BASIC
-              : process.env.NEXT_PUBLIC_PADDLE_PRICE_ID_PRO;
+            ? JSON.stringify({ analysisId: null })
+            : JSON.stringify({ tier });
 
-        window.Paddle!.Checkout.open({
-          items: [{ priceId: priceId || "", quantity: 1 }],
-          customData: { user_id: profile?.id || "", tier },
-          settings: {
-            successUrl: `${window.location.origin}/billing?upgraded=1`,
-            displayMode: "overlay",
-            theme: "dark",
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
+          body,
         });
+
+        const data = await res.json();
+        if (data.checkoutUrl && window.LemonSqueezy) {
+          window.LemonSqueezy.Url.Open(data.checkoutUrl);
+        }
       } finally {
         setUpgradeLoading(null);
       }
     },
-    [paddleLoaded, token, profile]
+    [lsLoaded, token]
   );
 
   if (loading) {
@@ -253,7 +241,7 @@ export default function BillingPage() {
             <div>
               <p className="text-xs text-muted">Subscription ID</p>
               <p className="mt-0.5 font-mono text-xs font-medium">
-                {profile.paddle_subscription_id || "—"}
+                {profile.ls_subscription_id || "—"}
               </p>
             </div>
           </div>
@@ -444,8 +432,8 @@ export default function BillingPage() {
         <h2 className="text-sm font-semibold">Payment Information</h2>
         <p className="mt-2 text-sm text-muted">
           All payments are processed securely by{" "}
-          <span className="text-foreground">Paddle</span>, our Merchant of
-          Record. Paddle handles billing, tax collection, and invoicing.
+          <span className="text-foreground">Lemon Squeezy</span>, our Merchant of
+          Record. Lemon Squeezy handles billing, tax collection, and invoicing.
         </p>
         <p className="mt-2 text-sm text-muted">
           If a refund is granted, the cost of any analysis delivered will be

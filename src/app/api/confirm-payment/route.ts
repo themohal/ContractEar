@@ -3,26 +3,20 @@ import { getServiceSupabase } from "@/lib/supabase";
 import { getAuthUser, unauthorizedResponse, incrementUsage } from "@/lib/auth";
 import { processAnalysis } from "@/lib/process-analysis";
 
-async function verifyPaddleTransaction(
-  transactionId: string
-): Promise<boolean> {
-  const paddleBase =
-    process.env.NEXT_PUBLIC_PADDLE_ENV === "sandbox"
-      ? "sandbox-api.paddle.com"
-      : "api.paddle.com";
-
+async function verifyLemonSqueezyOrder(orderId: string): Promise<boolean> {
   try {
     const res = await fetch(
-      `https://${paddleBase}/transactions/${transactionId}`,
+      `https://api.lemonsqueezy.com/v1/orders/${orderId}`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.PADDLE_API_KEY}`,
+          Authorization: `Bearer ${process.env.LEMONSQUEEZY_API_KEY}`,
+          Accept: "application/vnd.api+json",
         },
       }
     );
     if (!res.ok) return false;
     const data = await res.json();
-    return data.data?.status === "completed" || data.data?.status === "paid";
+    return data.data?.attributes?.status === "paid";
   } catch {
     return false;
   }
@@ -46,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     const { data: analysis, error } = await supabase
       .from("analyses")
-      .select("status, user_id, tier, paddle_transaction_id")
+      .select("status, user_id, tier, ls_order_id")
       .eq("id", analysisId)
       .single();
 
@@ -73,18 +67,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: "error" });
     }
 
-    // If still "pending", verify payment directly with Paddle as webhook fallback
+    // If still "pending", verify payment directly with Lemon Squeezy as webhook fallback
     if (analysis.status === "pending") {
-      if (!analysis.paddle_transaction_id) {
+      if (!analysis.ls_order_id) {
         return NextResponse.json(
           { error: "Payment required before processing" },
           { status: 402 }
         );
       }
 
-      const isPaid = await verifyPaddleTransaction(
-        analysis.paddle_transaction_id
-      );
+      const isPaid = await verifyLemonSqueezyOrder(analysis.ls_order_id);
       if (!isPaid) {
         return NextResponse.json(
           { error: "Payment required before processing" },
@@ -104,7 +96,6 @@ export async function POST(request: NextRequest) {
         .select("id");
 
       if (!claimed || claimed.length === 0) {
-        // Webhook already advanced this — return current status
         return NextResponse.json({ status: "processing" });
       }
     }
@@ -121,7 +112,6 @@ export async function POST(request: NextRequest) {
       .select("id");
 
     if (!started || started.length === 0) {
-      // Already processing or completed — just report current status
       return NextResponse.json({ status: "processing" });
     }
 

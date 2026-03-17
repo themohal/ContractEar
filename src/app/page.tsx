@@ -125,7 +125,7 @@ export default function Home() {
         </h2>
         <p className="mt-3 text-center text-muted">
           Pay per analysis or save with a monthly plan. All payments processed
-          securely by Paddle.
+          securely by Lemon Squeezy.
         </p>
         <div className="mx-auto mt-10 grid max-w-4xl gap-6 sm:grid-cols-3">
           {PLANS.map((plan) => (
